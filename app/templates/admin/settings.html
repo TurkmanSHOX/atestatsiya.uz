@@ -1,0 +1,68 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Platforma Sozlamalari{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0"><i class="bi bi-sliders text-success me-2"></i> Platforma Sozlamalari</h1>
+    <span class="text-muted small">Tashkilot rekvizitlari, to'lov ma'lumotlari va xavfsizlik parametrlari</span>
+  </div>
+</div>
+
+<div class="card border rounded-3 p-4 bg-white shadow-sm max-w-900">
+  <form method="POST" action="{{ url_for('admin.settings_page') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <h5 class="fw-bold text-dark mb-3">1. Umumiy ma'lumotlar</h5>
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">Platforma nomi</label>
+        <input type="text" name="site_name" class="form-control" value="{{ site_name }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">Yagona aloqa telefoni</label>
+        <input type="text" name="support_phone" class="form-control" value="{{ support_phone }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">Qo'llab-quvvatlash emaili</label>
+        <input type="email" name="support_email" class="form-control" value="{{ support_email }}">
+      </div>
+    </div>
+
+    <h5 class="fw-bold text-dark mb-3 border-top pt-3">2. Bank va To'lov Rekvizitlari</h5>
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">To'lov qabul qiluvchi karta raqami (Uzcard / Humo)</label>
+        <input type="text" name="card_number" class="form-control font-monospace" value="8600 1234 5678 9012">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">Karta egasi (Tashkilot)</label>
+        <input type="text" name="card_holder" class="form-control" value="DAVLAT ATTESTATSIYA MARKAZI">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">Xizmat ko'rsatuvchi bank</label>
+        <input type="text" name="bank_name" class="form-control" value="TIF MILLIY BANKI">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">Hisob raqam (H/R)</label>
+        <input type="text" name="bank_account" class="form-control font-monospace" value="20208000900000123001">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">MFO kodi</label>
+        <input type="text" name="mfo" class="form-control font-monospace" value="00450">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold">INN</label>
+        <input type="text" name="inn" class="form-control font-monospace" value="201122334">
+      </div>
+    </div>
+
+    <div class="pt-3 border-top text-end">
+      <button type="submit" class="btn btn-gov-primary px-4 fw-bold">
+        <i class="bi bi-save me-1"></i> Sozlamalarni saqlash
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

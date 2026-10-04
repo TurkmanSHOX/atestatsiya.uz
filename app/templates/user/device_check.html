@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Texnik Tekshiruv - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Imtihon Oldi Texnik Tekshiruvi</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Kabinet</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Texnik tekshiruv</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      
+      <div class="card border rounded-4 p-4 p-md-5 bg-white shadow-sm mb-4">
+        <h4 class="fw-bold text-dark mb-3"><i class="bi bi-camera-video text-success me-2"></i> Qurilma va Brauzer Tekshiruvi</h4>
+        <p class="text-secondary small mb-4">
+          Xolislik va xavfsizlikni ta'minlash maqsadida imtihon kompyuteringiz kamerasi va mikrofoni faol bo'lishi talab etiladi. Brauzer ruxsat so'raganda <strong>«Ruxsat berish» (Allow)</strong> tugmasini bosing.
+        </p>
+
+        <!-- Camera Preview Box -->
+        <div class="text-center mb-4">
+          <div class="border rounded-3 bg-dark d-inline-block position-relative overflow-hidden" style="width: 100%; max-width: 480px; height: 320px;">
+            <video id="webcamPreview" autoplay playsinline class="w-100 h-100 object-fit-cover"></video>
+            <div id="cameraStatusOverlay" class="position-absolute top-50 start-50 translate-middle text-white text-center">
+              <i class="bi bi-camera-video-off fs-1 d-block mb-2"></i>
+              <span class="small">Kameraga ulanmoqda...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="list-group list-group-flush mb-4 small">
+          <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+            <div>
+              <i class="bi bi-camera-video text-success me-2 fs-5"></i>
+              <strong>Veb-kamera holati:</strong>
+            </div>
+            <span id="camStatusBadge" class="badge bg-secondary">Tekshirilmoqda</span>
+          </div>
+
+          <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+            <div>
+              <i class="bi bi-mic text-success me-2 fs-5"></i>
+              <strong>Mikrofon holati:</strong>
+            </div>
+            <span id="micStatusBadge" class="badge bg-secondary">Tekshirilmoqda</span>
+          </div>
+
+          <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+            <div>
+              <i class="bi bi-browser-chrome text-success me-2 fs-5"></i>
+              <strong>Brauzer mosligi:</strong>
+            </div>
+            <span class="badge bg-success">MOS KELADI</span>
+          </div>
+
+          <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+            <div>
+              <i class="bi bi-arrows-fullscreen text-success me-2 fs-5"></i>
+              <strong>To'liq ekran (Fullscreen) qo'llab-quvvatlashi:</strong>
+            </div>
+            <span class="badge bg-success">QO'LLANADI</span>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+          <a href="{{ url_for('user.my_attestations') }}" class="btn btn-outline-secondary">Bekor qilish</a>
+          <a href="{{ url_for('user.exam_instructions', reg_id=reg.id) }}" id="proceedBtn" class="btn btn-gov-primary px-4 fw-bold">
+            Imtihon yo'riqnomasiga o'tish <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Camera & Mic check script
+  document.addEventListener('DOMContentLoaded', async () => {
+    const video = document.getElementById('webcamPreview');
+    const overlay = document.getElementById('cameraStatusOverlay');
+    const camBadge = document.getElementById('camStatusBadge');
+    const micBadge = document.getElementById('micStatusBadge');
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      video.srcObject = stream;
+      overlay.style.display = 'none';
+
+      camBadge.className = 'badge bg-success';
+      camBadge.innerText = 'FAOL VA TAYYOR';
+
+      micBadge.className = 'badge bg-success';
+      micBadge.innerText = 'FAOL VA TAYYOR';
+    } catch (err) {
+      console.warn("Media xatoligi:", err);
+      overlay.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning fs-1 d-block mb-2"></i> Kamera yoki mikrofonga ruxsat berilmadi.<br/><small>Sinov rejimida davom etishingiz mumkin.</small>';
+      camBadge.className = 'badge bg-warning text-dark';
+      camBadge.innerText = 'Ruxsat berilmadi (Sinov)';
+      micBadge.className = 'badge bg-warning text-dark';
+      micBadge.innerText = 'Ruxsat berilmadi (Sinov)';
+    }
+  });
+</script>
+{% endblock %}

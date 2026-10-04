@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Bog'lanish - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Bog'lanish va Qayta Aloqa</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}">Bosh sahifa</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Bog'lanish</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-5">
+    <div class="col-lg-5">
+      <div class="card border rounded-3 p-4 bg-white shadow-sm h-100">
+        <h4 class="fw-bold text-dark mb-4">Rasmiy aloqa ma'lumotlari</h4>
+        
+        <div class="d-flex mb-4">
+          <div class="fs-4 text-success me-3"><i class="bi bi-geo-alt-fill"></i></div>
+          <div>
+            <strong class="d-block text-dark">Manzil:</strong>
+            <span class="text-secondary small">Toshkent shahri, Chilonzor tumani, Bunyodkor shoh ko'chasi, 28-uy</span>
+          </div>
+        </div>
+
+        <div class="d-flex mb-4">
+          <div class="fs-4 text-success me-3"><i class="bi bi-telephone-fill"></i></div>
+          <div>
+            <strong class="d-block text-dark">Yagona aloqa markazi:</strong>
+            <span class="text-secondary small">{{ support_phone }} (Ish vaqti: 09:00 - 18:00)</span>
+          </div>
+        </div>
+
+        <div class="d-flex mb-4">
+          <div class="fs-4 text-success me-3"><i class="bi bi-envelope-fill"></i></div>
+          <div>
+            <strong class="d-block text-dark">Elektron pochta:</strong>
+            <span class="text-secondary small">{{ support_email }}</span>
+          </div>
+        </div>
+
+        <div class="d-flex">
+          <div class="fs-4 text-success me-3"><i class="bi bi-telegram"></i></div>
+          <div>
+            <strong class="d-block text-dark">Telegram rasmiy kanali:</strong>
+            <span class="text-secondary small">@attestatsiya_uz_official</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card border rounded-3 p-4 p-md-5 bg-white shadow-sm">
+        <h4 class="fw-bold text-dark mb-3">Xabar yuborish</h4>
+        <p class="text-secondary small mb-4">Savol yoki takliflaringiz bo'lsa, quyidagi shaklni to'ldiring. Mutaxassislarimiz qisqa fursatda aloqaga chiqishadi.</p>
+
+        <form method="POST" action="{{ url_for('public.contact') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">F.I.Sh. <span class="text-danger">*</span></label>
+              <input type="text" name="name" class="form-control" required placeholder="Ismingiz">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Telefon raqam <span class="text-danger">*</span></label>
+              <input type="text" name="phone" class="form-control" required placeholder="+998 90 123 45 67">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Mavzu</label>
+              <input type="text" name="subject" class="form-control" placeholder="Murojaat mavzusi">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Xabar matni <span class="text-danger">*</span></label>
+              <textarea name="message" class="form-control" rows="4" required placeholder="Batafsil ma'lumot..."></textarea>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-gov-primary px-4 fw-bold">Yuborish</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

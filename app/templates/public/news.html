@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Yangiliklar va E'lonlar - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Yangiliklar va Rasmiy E'lonlar</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}">Bosh sahifa</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Yangiliklar</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4">
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border rounded-3 p-4 bg-white shadow-sm">
+        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 align-self-start mb-2">E'lon</span>
+        <h5 class="fw-bold text-dark mb-2">Pedagog xodimlar uchun 2026-yil 1-mavsum attestatsiyasi boshlandi</h5>
+        <p class="text-secondary small mb-3">Xalq ta'limi va maktabgacha ta'lim muassasalari pedagoglari uchun yangi tartibdagi sinovlar e'lon qilindi.</p>
+        <span class="text-muted small mt-auto"><i class="bi bi-calendar3 me-1"></i> 02.10.2026</span>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border rounded-3 p-4 bg-white shadow-sm">
+        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 align-self-start mb-2">Tizim yangilanishi</span>
+        <h5 class="fw-bold text-dark mb-2">Elektron sertifikatlarni QR orqali tezkor tekshirish moduli ishga tushirildi</h5>
+        <p class="text-secondary small mb-3">Endilikda barcha ish beruvchilar portalimiz orqali sertifikat haqiqiyligini bir soniyada tekshirishi mumkin.</p>
+        <span class="text-muted small mt-auto"><i class="bi bi-calendar3 me-1"></i> 28.09.2026</span>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border rounded-3 p-4 bg-white shadow-sm">
+        <span class="badge bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25 align-self-start mb-2">Muhim</span>
+        <h5 class="fw-bold text-dark mb-2">Imtihon paytida anti-cheat nazorati kuchaytirildi</h5>
+        <p class="text-secondary small mb-3">Nomzodlarning bilimini xolis baholash maqsadida sun'iy intellekt proktoring mexanizmlari joriy etildi.</p>
+        <span class="text-muted small mt-auto"><i class="bi bi-calendar3 me-1"></i> 20.09.2026</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

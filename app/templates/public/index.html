@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Bosh sahifa - O'zbekiston Professional Attestatsiya Tizimi{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7">
+        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-semibold mb-3">
+          <i class="bi bi-patch-check-fill me-1"></i> Davlat va Xalqaro Standartlariga Muvofiq
+        </span>
+        <h1 class="display-5 fw-bold text-dark mb-4">
+          Professional Attestatsiya va Imtihonlarni Onlayn Topshiring
+        </h1>
+        <p class="lead text-secondary mb-4">
+          Pedagoglar, davlat xizmatchilari va soha mutaxassislari uchun xolis, shaffof, avtomatlashtirilgan va QR-kodli rasmiy sertifikat beruvchi milliy platforma.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('public.attestations') }}" class="btn btn-gov-primary btn-lg px-4 shadow-sm">
+            <i class="bi bi-compass me-2"></i> Attestatsiyalarni tanlash
+          </a>
+          <a href="{{ url_for('public.verify_certificate', cert_no='check') }}" class="btn btn-gov-outline btn-lg px-4">
+            <i class="bi bi-qr-code-scan me-2"></i> Sertifikatni tekshirish
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card border-0 shadow-lg p-4 bg-white rounded-4">
+          <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-shaded text-success me-2"></i> Attestatsiya jarayoni</h5>
+          <div class="list-group list-group-flush small">
+            <div class="list-group-item d-flex align-items-center py-3">
+              <span class="badge bg-success rounded-circle me-3 p-2">1</span>
+              <div>
+                <strong class="d-block text-dark">Ro'yxatdan o'tish</strong>
+                <span class="text-muted">Shaxsiy va kasbiy ma'lumotlarni to'ldirish</span>
+              </div>
+            </div>
+            <div class="list-group-item d-flex align-items-center py-3">
+              <span class="badge bg-success rounded-circle me-3 p-2">2</span>
+              <div>
+                <strong class="d-block text-dark">Yo'nalish va to'lov</strong>
+                <span class="text-muted">Attestatsiyani tanlash va chek yuklash</span>
+              </div>
+            </div>
+            <div class="list-group-item d-flex align-items-center py-3">
+              <span class="badge bg-success rounded-circle me-3 p-2">3</span>
+              <div>
+                <strong class="d-block text-dark">Onlayn imtihon</strong>
+                <span class="text-muted">Anti-cheat va proktoring nazoratida test</span>
+              </div>
+            </div>
+            <div class="list-group-item d-flex align-items-center py-3">
+              <span class="badge bg-success rounded-circle me-3 p-2">4</span>
+              <div>
+                <strong class="d-block text-dark">QR Sertifikat</strong>
+                <span class="text-muted">Haqiqiyligi tasdiqlangan elektron sertifikat</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Statistics Bar -->
+<section class="py-4 bg-white border-bottom">
+  <div class="container">
+    <div class="row text-center g-4">
+      <div class="col-md-3 col-6">
+        <h3 class="fw-bold text-success mb-1">{{ stats.attestations_count }}+</h3>
+        <p class="text-muted small mb-0">Faol Attestatsiya Dasturlari</p>
+      </div>
+      <div class="col-md-3 col-6">
+        <h3 class="fw-bold text-dark mb-1">{{ stats.candidates_count }}+</h3>
+        <p class="text-muted small mb-0">Ro'yxatdan O'tgan Nomzodlar</p>
+      </div>
+      <div class="col-md-3 col-6">
+        <h3 class="fw-bold text-primary mb-1">{{ stats.passed_count }}+</h3>
+        <p class="text-muted small mb-0">Muvaffaqiyatli Sinovlar</p>
+      </div>
+      <div class="col-md-3 col-6">
+        <h3 class="fw-bold text-success mb-1">{{ stats.certificates_issued }}+</h3>
+        <p class="text-muted small mb-0">Berilgan Rasmiy Sertifikatlar</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Active Attestations Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h2 class="fw-bold text-dark mb-1">Ommabop Attestatsiyalar</h2>
+        <p class="text-muted mb-0">Mutaxassisligingiz bo'yicha mos attestatsiya dasturini tanlang</p>
+      </div>
+      <a href="{{ url_for('public.attestations') }}" class="btn btn-outline-success fw-semibold">
+        Barchasini ko'rish <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-4">
+      {% for att in attestations %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 gov-card border rounded-3 p-4 d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
+              {{ att.field_name }}
+            </span>
+            <span class="fw-bold text-primary">{{ att.formatted_price() }}</span>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">{{ att.title }}</h5>
+          <p class="text-muted small flex-grow-1 mb-4">{{ att.short_description }}</p>
+          
+          <div class="row g-2 text-muted small border-top pt-3 mb-4">
+            <div class="col-6">
+              <i class="bi bi-question-circle me-1 text-success"></i> {{ att.questions_count }} ta savol
+            </div>
+            <div class="col-6">
+              <i class="bi bi-stopwatch me-1 text-success"></i> {{ att.duration_minutes }} daqiqa
+            </div>
+            <div class="col-6">
+              <i class="bi bi-check2-circle me-1 text-success"></i> O'tish bali: {{ att.passing_score }}%
+            </div>
+            <div class="col-6">
+              <i class="bi bi-arrow-repeat me-1 text-success"></i> {{ att.max_attempts }} ta urinish
+            </div>
+          </div>
+
+          <a href="{{ url_for('public.attestation_detail', slug=att.slug) }}" class="btn btn-gov-primary w-100">
+            Batafsil va Ro'yxatdan o'tish
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Advantages & Security -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="text-center max-w-700 mx-auto mb-5">
+      <h2 class="fw-bold text-dark">Nima uchun Attestatsiya.uz?</h2>
+      <p class="text-muted">Platforma shaffoflik, xavfsizlik va adolatli baholash prinsiplari asosida yaratilgan.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="p-4 rounded-3 border bg-light h-100">
+          <div class="fs-1 text-success mb-3"><i class="bi bi-cpu"></i></div>
+          <h5 class="fw-bold text-dark">Sun'iy Intellekt va Anti-Cheat</h5>
+          <p class="text-muted small mb-0">Imtihon davomida brauzer xatti-harakatlari, tab almashtirish va ruxsatsiz urinishlar real vaqt rejimida qayd etiladi.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-4 rounded-3 border bg-light h-100">
+          <div class="fs-1 text-success mb-3"><i class="bi bi-shuffle"></i></div>
+          <h5 class="fw-bold text-dark">Stratifikatsiyalangan Randomizatsiya</h5>
+          <p class="text-muted small mb-0">Har bir nomzod uchun savollar mavzular va qiyinlik kvotalari asosida individual shakllanadi. Savollar takrorlanmaydi.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-4 rounded-3 border bg-light h-100">
+          <div class="fs-1 text-success mb-3"><i class="bi bi-qr-code"></i></div>
+          <h5 class="fw-bold text-dark">Haqiqiy QR Verifikatsiya</h5>
+          <p class="text-muted small mb-0">Elektron sertifikatlar davlat reestriga kiritiladi va istalgan ish beruvchi tomonidan QR orqali tekshirilishi mumkin.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

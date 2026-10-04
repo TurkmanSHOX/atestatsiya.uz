@@ -1,0 +1,105 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Word Import - Savollar Banki{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0"><i class="bi bi-file-earmark-word text-primary me-2"></i> Word (.docx) Orqali Savollar Importi</h1>
+    <span class="text-muted small">Word matnidan savollar va to'g'ri javoblarni avtomatik ajratish</span>
+  </div>
+  <a href="{{ url_for('admin.questions_list') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Savollar bankiga qaytish
+  </a>
+</div>
+
+<!-- Upload Box -->
+<div class="card border rounded-3 p-4 bg-white shadow-sm mb-4 max-w-900">
+  <form method="POST" action="{{ url_for('admin.import_word') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="p-4 border-2 border-dashed border-primary rounded-3 bg-light text-center mb-3">
+      <i class="bi bi-file-earmark-word-fill text-primary fs-1 mb-2 d-block"></i>
+      <h6 class="fw-bold">Word (.docx) faylni tanlang</h6>
+      <div class="bg-white p-3 rounded border my-2 text-start font-monospace small mx-auto" style="max-width: 450px;">
+        1. Savol matni?<br/>
+        A) Variant<br/>
+        *B) To'g'ri javob ("*" belgisi to'g'ri javobni bildiradi)<br/>
+        C) Variant<br/>
+        D) Variant
+      </div>
+      
+      <div class="row justify-content-center mt-3">
+        <div class="col-md-6">
+          <input type="file" name="word_file" class="form-control" accept=".docx" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+      <span class="text-muted small"><i class="bi bi-info-circle me-1"></i> Tizim "*" belgisini aniqlab, to'g'ri javob deb belgilaydi.</span>
+      <button type="submit" class="btn btn-primary px-4 fw-bold">
+        <i class="bi bi-search me-1"></i> Word faylni tahlil qilish
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Preview Results -->
+{% if preview %}
+<div class="card border-0 shadow rounded-3 p-4 bg-white mb-5">
+  <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+    <div>
+      <h5 class="fw-bold text-dark mb-0">Word Import Preview</h5>
+      <span class="text-muted small">Ajratilgan savollar soni: {{ preview.total_parsed }} ta</span>
+    </div>
+    
+    {% if preview.total_parsed > 0 %}
+    <form method="POST" action="{{ url_for('admin.import_word') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="commit">
+      <button type="submit" class="btn btn-success fw-bold px-4">
+        <i class="bi bi-check2-all me-1"></i> Barcha {{ preview.total_parsed }} ta savolni bazaga saqlash
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if preview.duplicates_count > 0 %}
+  <div class="alert alert-warning py-2 small mb-3">
+    <i class="bi bi-exclamation-triangle-fill me-1"></i> Takroriy savollar topildi: {{ preview.duplicates_count }} ta.
+  </div>
+  {% endif %}
+
+  {% if preview.errors %}
+  <div class="alert alert-danger py-3 small mb-4">
+    <h6 class="fw-bold mb-2">Quyidagi xatoliklar aniqlandi:</h6>
+    <ul class="mb-0 ps-3">
+      {% for err in preview.errors %}
+      <li>{{ err }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if preview.questions %}
+  <div class="list-group list-group-flush">
+    {% for q in preview.questions %}
+    <div class="list-group-item px-0 py-3">
+      <h6 class="fw-bold text-dark mb-2">{{ loop.index }}. {{ q.text }}</h6>
+      <div class="row g-2 small">
+        {% for opt in q.options %}
+        <div class="col-md-6">
+          <div class="p-2 rounded border {% if opt.is_correct %}bg-success bg-opacity-10 border-success text-success fw-bold{% else %}bg-light{% endif %}">
+            {% if opt.is_correct %}✓{% else %}○{% endif %} {{ opt.key }}) {{ opt.text }}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

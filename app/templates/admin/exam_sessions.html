@@ -1,0 +1,84 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Jonli Imtihon Monitoringi{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0"><i class="bi bi-broadcast text-danger me-2"></i> Jonli Imtihon Sessiyalari Monitoringi</h1>
+    <span class="text-muted small">Real vaqt rejimida davom etayotgan sinovlar va qoidabuzarliklar nazorati</span>
+  </div>
+  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.location.reload();">
+    <i class="bi bi-arrow-clockwise me-1"></i> Yangilash
+  </button>
+</div>
+
+<div class="card border rounded-3 bg-white shadow-sm overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light small">
+        <tr>
+          <th>Nomzod</th>
+          <th>Test / Attestatsiya</th>
+          <th>Boshlangan vaqt</th>
+          <th>Qolgan vaqt</th>
+          <th>IP & Qurilma</th>
+          <th>Proktoring hodisalari</th>
+          <th>Holat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        <tr>
+          <td>
+            <strong class="d-block text-dark">{{ s.user.full_name }}</strong>
+            <span class="text-muted small">{{ s.user.phone }}</span>
+          </td>
+          <td>
+            <span class="fw-semibold d-block">{{ s.test.title }}</span>
+            <span class="text-muted small">{{ s.registration.attestation.title }}</span>
+          </td>
+          <td class="small">{{ s.started_at.strftime('%H:%M:%S (%d.%m)') }}</td>
+          <td>
+            {% if s.status == 'IN_PROGRESS' %}
+            <span class="font-monospace fw-bold {% if s.remaining_seconds < 300 %}text-danger{% else %}text-dark{% endif %}">
+              {{ (s.remaining_seconds // 60) }} daq {{ (s.remaining_seconds % 60) }} son
+            </span>
+            {% else %}
+            <span class="text-muted small">Tugagan</span>
+            {% endif %}
+          </td>
+          <td class="small">
+            <span class="d-block font-monospace">{{ s.ip_address }}</span>
+            <span class="text-muted" style="font-size: 0.72rem;">{{ s.user_agent[:40] }}...</span>
+          </td>
+          <td>
+            {% set violations = s.proctoring_events|length %}
+            {% if violations > 0 %}
+            <span class="badge bg-danger">{{ violations }} ta hodisa</span>
+            {% else %}
+            <span class="badge bg-success">Toza</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if s.status == 'IN_PROGRESS' %}
+            <span class="badge bg-danger animate-pulse">JARAYONDA</span>
+            {% elif s.status == 'SUBMITTED' %}
+            <span class="badge bg-success">YAKUNLANDI</span>
+            {% elif s.status == 'EXPIRED' %}
+            <span class="badge bg-warning text-dark">MUDDATI O'TDI</span>
+            {% else %}
+            <span class="badge bg-secondary">{{ s.status }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-4 text-muted">Ayni paytda faol sessiyalar mavjud emas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Proktoring Hodisalari{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0"><i class="bi bi-shield-exclamation text-warning me-2"></i> Proktoring va Xavfsizlik Hodisalari</h1>
+    <span class="text-muted small">Imtihon paytida qayd etilgan qoidabuzarliklar va shubhali harakatlar jurnali</span>
+  </div>
+</div>
+
+<div class="card border rounded-3 bg-white shadow-sm overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light small">
+        <tr>
+          <th>Vaqt</th>
+          <th>Nomzod</th>
+          <th>Hodisa turi</th>
+          <th>Xavf darajasi</th>
+          <th>Sessiya ID</th>
+          <th>Tafsilot</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ev in events %}
+        <tr>
+          <td class="small">{{ ev.created_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+          <td>
+            <strong class="d-block text-dark">{{ ev.user.full_name }}</strong>
+            <span class="text-muted small">{{ ev.user.phone }}</span>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border font-monospace">{{ ev.event_type }}</span>
+          </td>
+          <td>
+            {% if ev.severity == 'HIGH' %}
+            <span class="badge bg-danger">YUQORI</span>
+            {% elif ev.severity == 'MEDIUM' %}
+            <span class="badge bg-warning text-dark">O'RTA</span>
+            {% else %}
+            <span class="badge bg-info text-dark">PAST</span>
+            {% endif %}
+          </td>
+          <td class="font-monospace small text-muted">{{ ev.session_id[:12] }}...</td>
+          <td class="small text-secondary">{{ ev.details }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center py-4 text-muted">Qoidabuzarliklar qayd etilmagan.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

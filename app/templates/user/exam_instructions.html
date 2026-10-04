@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Imtihon Yo'riqnomasi - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Imtihon Sinovi Oldi Yo'riqnomasi</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Kabinet</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Yo'riqnoma</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      
+      <div class="card border rounded-4 p-4 p-md-5 bg-white shadow-sm">
+        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 align-self-start mb-2">
+          {{ reg.attestation.field_name }}
+        </span>
+        <h3 class="fw-bold text-dark mb-4">«{{ reg.attestation.title }}»</h3>
+
+        <div class="row g-3 mb-4 text-center">
+          <div class="col-4">
+            <div class="p-3 bg-light rounded-3 border">
+              <span class="text-muted small d-block">Savollar:</span>
+              <h4 class="fw-bold text-dark mb-0">{{ reg.attestation.questions_count }} ta</h4>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-3 bg-light rounded-3 border">
+              <span class="text-muted small d-block">Ajratilgan vaqt:</span>
+              <h4 class="fw-bold text-dark mb-0">{{ reg.attestation.duration_minutes }} daqiqa</h4>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-3 bg-light rounded-3 border">
+              <span class="text-muted small d-block">O'tish bali:</span>
+              <h4 class="fw-bold text-success mb-0">{{ reg.attestation.passing_score }}%</h4>
+            </div>
+          </div>
+        </div>
+
+        <h5 class="fw-bold text-dark mb-3">Muhim qoidalar va eslatmalar:</h5>
+        <div class="alert alert-warning border-warning border-opacity-50 small mb-4">
+          <ul class="mb-0 ps-3">
+            <li class="mb-1">«Imtihonni boshlash» tugmasi bosilgach, server taymeri ishga tushadi.</li>
+            <li class="mb-1">Test to'liq ekran (Fullscreen) rejimida o'tadi. Boshqa oyna yoki dasturga o'tish qat'iyan taqiqlanadi.</li>
+            <li class="mb-1">Anti-cheat tizimi har qanday shubhali harakatni va tab almashtirishni avtomatik qayd qiladi.</li>
+            <li class="mb-1">Vaqt tugaganda barcha berilgan javoblar avtomatik baholanadi.</li>
+          </ul>
+        </div>
+
+        <!-- Start Form -->
+        <form method="POST" action="{{ url_for('user.start_exam', reg_id=reg.id) }}" id="startExamForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="device_fingerprint" id="deviceFingerprint" value="">
+
+          <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="agreeCheckbox" required>
+            <label class="form-check-label small fw-semibold cursor-pointer" for="agreeCheckbox">
+              Men attestatsiya qoidalari va xavfsizlik talablari bilan to'liq tanishdim va ularga qat'iy rioya qilishga roziman.
+            </label>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+            <a href="{{ url_for('user.my_attestations') }}" class="btn btn-outline-secondary">Bekor qilish</a>
+            <button type="submit" id="startBtn" class="btn btn-gov-primary btn-lg px-4 fw-bold shadow-sm" disabled>
+              <i class="bi bi-play-circle-fill me-2"></i> Imtihonni Boshlash
+            </button>
+          </div>
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const agree = document.getElementById('agreeCheckbox');
+    const startBtn = document.getElementById('startBtn');
+    const fpInput = document.getElementById('deviceFingerprint');
+
+    // Generate lightweight device fingerprint
+    fpInput.value = navigator.userAgent + '||' + screen.width + 'x' + screen.height + '||' + navigator.language;
+
+    agree.addEventListener('change', () => {
+      startBtn.disabled = !agree.checked;
+    });
+
+    document.getElementById('startExamForm').addEventListener('submit', () => {
+      // Trigger fullscreen if supported
+      try {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        }
+      } catch (e) {}
+    });
+  });
+</script>
+{% endblock %}

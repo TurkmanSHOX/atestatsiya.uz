@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Profil Sozlamalari - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Mening Profilim va Hisob Xavfsizligi</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Kabinet</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Profil</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-5">
+    
+    <!-- Profile Edit Form -->
+    <div class="col-lg-8">
+      <div class="card border rounded-3 p-4 bg-white shadow-sm mb-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-person text-success me-2"></i> Shaxsiy va Kasbiy Ma'lumotlar</h5>
+        
+        <form method="POST" action="{{ url_for('user.profile') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="update_profile">
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Familiya</label>
+              <input type="text" name="last_name" class="form-control" value="{{ current_user.last_name }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Ism</label>
+              <input type="text" name="first_name" class="form-control" value="{{ current_user.first_name }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Otasining ismi</label>
+              <input type="text" name="middle_name" class="form-control" value="{{ current_user.middle_name or '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Telefon raqam</label>
+              <input type="text" class="form-control bg-light" value="{{ current_user.phone }}" disabled>
+              <span class="text-muted small" style="font-size: 0.75rem;">Telefon raqamini o'zgartirish faqat qo'llab-quvvatlash orqali</span>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Elektron pochta</label>
+              <input type="email" class="form-control bg-light" value="{{ current_user.email }}" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Ish joyi / Muassasa</label>
+              <input type="text" name="organization" class="form-control" value="{{ current_user.organization or '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Lavozim</label>
+              <input type="text" name="position" class="form-control" value="{{ current_user.position or '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Mutaxassislik</label>
+              <input type="text" name="specialty" class="form-control" value="{{ current_user.specialty or '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Hudud</label>
+              <input type="text" name="region" class="form-control" value="{{ current_user.region or '' }}">
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top text-end">
+            <button type="submit" class="btn btn-gov-primary px-4 fw-bold">O'zgarishlarni saqlash</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Uploaded Documents -->
+      <div class="card border rounded-3 p-4 bg-white shadow-sm">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-file-earmark-check text-success me-2"></i> Mening Yuklangan Hujjatlarim</h5>
+        {% if current_user.documents %}
+        <div class="list-group list-group-flush small">
+          {% for doc in current_user.documents %}
+          <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+            <div>
+              <strong class="d-block text-dark">{{ doc.doc_type }}: {{ doc.file_name }}</strong>
+              <span class="text-muted">{{ (doc.file_size / 1024)|round(1) }} KB | {{ doc.created_at.strftime('%d.%m.%Y') }}</span>
+            </div>
+            <span class="badge {% if doc.verification_status == 'APPROVED' %}bg-success{% elif doc.verification_status == 'REJECTED' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+              {{ doc.verification_status }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">Hozircha biriktirilgan hujjatlar yo'q.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Password Change Form -->
+    <div class="col-lg-4">
+      <div class="card border rounded-3 p-4 bg-white shadow-sm">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-lock text-success me-2"></i> Parolni almashtirish</h5>
+        
+        <form method="POST" action="{{ url_for('user.profile') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="change_password">
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Amaldagi parol</label>
+            <input type="password" name="old_password" class="form-control" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Yangi parol</label>
+            <input type="password" name="new_password" class="form-control" minlength="8" required>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Yangi parolni takrorlang</label>
+            <input type="password" name="confirm_password" class="form-control" minlength="8" required>
+          </div>
+
+          <button type="submit" class="btn btn-outline-success w-100 fw-bold">Parolni yangilash</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

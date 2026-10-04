@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Narxlar va To'lov Shartlari - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Xizmat Narxlari va To'lov Qoidalari</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}">Bosh sahifa</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Narxlar</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4 mb-5">
+    <div class="col-lg-8">
+      <div class="card border rounded-3 p-4 bg-white shadow-sm">
+        <h4 class="fw-bold text-dark mb-4">Attestatsiya tariflari jadvali</h4>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Attestatsiya yo'nalishi</th>
+                <th>Savollar</th>
+                <th>Vaqt</th>
+                <th>Narxi</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for att in attestations %}
+              <tr>
+                <td>
+                  <strong class="d-block">{{ att.title }}</strong>
+                  <span class="badge bg-light text-dark border">{{ att.field_name }}</span>
+                </td>
+                <td>{{ att.questions_count }} ta</td>
+                <td>{{ att.duration_minutes }} daqiqa</td>
+                <td class="fw-bold text-success">{{ att.formatted_price() }}</td>
+                <td>
+                  <a href="{{ url_for('public.attestation_detail', slug=att.slug) }}" class="btn btn-sm btn-gov-outline">Topshirish</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Official Bank Details -->
+    <div class="col-lg-4">
+      <div class="card border rounded-3 p-4 bg-white shadow-sm">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-bank text-success me-2"></i> To'lov Rekvizitlari</h5>
+        <p class="small text-muted mb-3">To'lovni amalga oshirishda quyidagi hisob raqam yoki karta raqamidan foydalaning va to'lov kvitansiyasini saqlab qo'ying:</p>
+
+        <ul class="list-group list-group-flush small mb-3">
+          <li class="list-group-item px-0">
+            <span class="text-muted d-block">Qabul qiluvchi:</span>
+            <strong>DAVLAT ATTESTATSIYA VA IMTIHON MARKAZI</strong>
+          </li>
+          <li class="list-group-item px-0">
+            <span class="text-muted d-block">Karta raqami (Uzcard/Humo):</span>
+            <strong class="font-monospace fs-6 text-success">8600 1234 5678 9012</strong>
+          </li>
+          <li class="list-group-item px-0">
+            <span class="text-muted d-block">Hisob raqam (H/R):</span>
+            <strong class="font-monospace">20208000900000123001</strong>
+          </li>
+          <li class="list-group-item px-0">
+            <span class="text-muted d-block">Bank va MFO:</span>
+            <strong>TIF MILLIY BANKI (MFO: 00450)</strong>
+          </li>
+          <li class="list-group-item px-0">
+            <span class="text-muted d-block">INN:</span>
+            <strong>201122334</strong>
+          </li>
+        </ul>
+
+        <div class="alert alert-info py-2 small mb-0">
+          <i class="bi bi-info-circle me-1"></i> To'lov amalga oshirilgach, chek fotosuratini profilingiz orqali tizimga yuklang.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Boshqaruv Paneli{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0">Platforma Boshqaruv Markazi</h1>
+    <span class="text-muted small">Real vaqt monitoringi va tizim statistikasi</span>
+  </div>
+  <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+    <a href="{{ url_for('admin.payments_list', status='PENDING') }}" class="btn btn-warning btn-sm fw-bold">
+      <i class="bi bi-clock-history me-1"></i> Kutilayotgan to'lovlar ({{ stats.pending_payments }})
+    </a>
+    <a href="{{ url_for('admin.exam_sessions') }}" class="btn btn-danger btn-sm fw-bold">
+      <i class="bi bi-broadcast me-1"></i> Jonli imtihonlar ({{ stats.active_sessions }})
+    </a>
+  </div>
+</div>
+
+<!-- Stat Cards Grid -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-sm-6">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small">Jami foydalanuvchilar</span>
+        <i class="bi bi-people text-primary fs-4"></i>
+      </div>
+      <h3 class="fw-bold text-dark mb-0">{{ stats.total_users }}</h3>
+      <span class="text-success small mt-2 d-block"><i class="bi bi-arrow-up-short"></i> Faol nomzodlar</span>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small">Faol attestatsiyalar</span>
+        <i class="bi bi-journal-bookmark text-success fs-4"></i>
+      </div>
+      <h3 class="fw-bold text-dark mb-0">{{ stats.active_attestations }}</h3>
+      <span class="text-muted small mt-2 d-block">Qabul ochiq</span>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small">Jami tushum (tasdiqlangan)</span>
+        <i class="bi bi-cash-stack text-success fs-4"></i>
+      </div>
+      <h4 class="fw-bold text-success mb-0">{{ stats.total_revenue }}</h4>
+      <span class="text-muted small mt-2 d-block">Qonuniy to'lovlar</span>
+    </div>
+  </div>
+
+  <div class="col-md-3 col-sm-6">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm h-100">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small">Sinov natijalari (O'tgan / O'tmagan)</span>
+        <i class="bi bi-pie-chart text-info fs-4"></i>
+      </div>
+      <h3 class="fw-bold text-dark mb-0">
+        <span class="text-success">{{ stats.passed_count }}</span> / <span class="text-danger">{{ stats.failed_count }}</span>
+      </h3>
+      <span class="text-muted small mt-2 d-block">Muvaffaqiyat ko'rsatkichi</span>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Recent Live Exam Sessions -->
+  <div class="col-lg-7">
+    <div class="card border rounded-3 p-4 bg-white shadow-sm mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-broadcast text-danger me-2"></i> So'nggi Imtihon Sessiyalari</h5>
+        <a href="{{ url_for('admin.exam_sessions') }}" class="small text-success fw-bold text-decoration-none">Barchasi</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Nomzod</th>
+              <th>Attestatsiya</th>
+              <th>Boshlangan</th>
+              <th>Holat</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in recent_sessions %}
+            <tr>
+              <td>
+                <strong class="d-block">{{ s.user.full_name }}</strong>
+                <span class="text-muted">{{ s.ip_address }}</span>
+              </td>
+              <td>{{ s.test.title }}</td>
+              <td>{{ s.started_at.strftime('%H:%M:%S') }}</td>
+              <td>
+                {% if s.status == 'IN_PROGRESS' %}
+                <span class="badge bg-danger">Jonli (Jarayonda)</span>
+                {% elif s.status == 'SUBMITTED' %}
+                <span class="badge bg-success">Yakunlandi</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ s.status }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-3">Hozircha faol sessiyalar yo'q.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Audit Logs -->
+    <div class="card border rounded-3 p-4 bg-white shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-shield-check text-success me-2"></i> Xavfsizlik va Audit Jurnali</h5>
+        <a href="{{ url_for('admin.audit_logs') }}" class="small text-success fw-bold text-decoration-none">To'liq jurnal</a>
+      </div>
+
+      <div class="list-group list-group-flush small">
+        {% for a in recent_audits %}
+        <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ a.user.full_name if a.user else 'Tizim' }}:</strong>
+            <span class="badge bg-light text-dark border">{{ a.action }}</span> on {{ a.entity }}
+          </div>
+          <span class="text-muted small">{{ a.created_at.strftime('%d.%m %H:%M:%S') }}</span>
+        </div>
+        {% else %}
+        <div class="text-muted small text-center py-2">Audit yozuvlari mavjud emas.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Payments to Review -->
+  <div class="col-lg-5">
+    <div class="card border rounded-3 p-4 bg-white shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-credit-card text-warning me-2"></i> To'lovlar Nazorati</h5>
+        <a href="{{ url_for('admin.payments_list') }}" class="small text-success fw-bold text-decoration-none">Barchasi</a>
+      </div>
+
+      <div class="list-group list-group-flush small">
+        {% for p in recent_payments %}
+        <div class="list-group-item px-0 py-3">
+          <div class="d-flex justify-content-between align-items-start mb-1">
+            <div>
+              <strong class="d-block text-dark">{{ p.user.full_name }}</strong>
+              <span class="text-muted">{{ p.registration.attestation.title }}</span>
+            </div>
+            <span class="badge {% if p.status == 'PAID' %}bg-success{% elif p.status == 'PENDING' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+              {{ p.status }}
+            </span>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="fw-bold text-success">{{ p.formatted_amount() }}</span>
+            {% if p.latest_receipt %}
+            <a href="/{{ p.latest_receipt.file_path }}" target="_blank" class="btn btn-outline-secondary btn-sm py-0">
+              <i class="bi bi-file-earmark-image me-1"></i> Chekni ko'rish
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <div class="text-muted small text-center py-3">To'lovlar topilmadi.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

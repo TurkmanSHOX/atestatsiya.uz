@@ -1,0 +1,135 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}AI Import - Savollar Banki{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0"><i class="bi bi-robot text-warning me-2"></i> AI / Matndan Savollar Ajratish</h1>
+    <span class="text-muted small">Sun'iy intellekt yordamida erkin matndan test strukturasini generatsiya qilish</span>
+  </div>
+  <a href="{{ url_for('admin.questions_list') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Savollar bankiga qaytish
+  </a>
+</div>
+
+<!-- Input Box -->
+<div class="card border rounded-3 p-4 bg-white shadow-sm mb-4 max-w-900">
+  <form method="POST" action="{{ url_for('admin.import_ai') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="parse">
+
+    <div class="mb-3">
+      <label class="form-label small fw-semibold">Nostrukturalangan matn, PDF yoki Word ko'chirmasini kiriting</label>
+      <textarea name="raw_text" class="form-control font-monospace small" rows="8" placeholder="Masalan:
+1. O'zbekiston poytaxti qaysi shahar?
+A) Samarqand
+*B) Toshkent
+C) Buxoro
+D) Xiva" required></textarea>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+      <span class="text-muted small"><i class="bi bi-shield-check text-success me-1"></i> AI natijasi avval tekshiruv uchun taqdim etiladi. Admin tasdig'isiz bazaga kiritilmaydi.</span>
+      <button type="submit" class="btn btn-warning px-4 fw-bold text-dark">
+        <i class="bi bi-lightning-charge-fill me-1"></i> AI orqali tahlil qilish
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- AI Preview with Approve / Reject / Edit -->
+{% if preview %}
+<div class="card border-0 shadow rounded-3 p-4 bg-white mb-5" id="aiPreviewBox">
+  <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+    <div>
+      <h5 class="fw-bold text-dark mb-0">AI Tahlil Natijalari (Admin Staging Preview)</h5>
+      <span class="text-muted small">Aniqlangan savollar: {{ preview.extracted_count }} ta</span>
+    </div>
+
+    <button type="button" class="btn btn-success fw-bold px-4" onclick="commitApproved()">
+      <i class="bi bi-check-all me-1"></i> Tanlangan savollarni bazaga saqlash
+    </button>
+  </div>
+
+  <div id="aiQuestionsList">
+    {% for q in preview.questions %}
+    <div class="card border rounded-3 p-3 mb-3 bg-light question-card" id="qcard_{{ loop.index0 }}">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <span class="badge bg-primary">Savol #{{ loop.index }}</span>
+        <div class="btn-group btn-group-sm">
+          <button type="button" class="btn btn-outline-success active approve-btn" onclick="toggleApprove({{ loop.index0 }})">
+            <i class="bi bi-check-lg"></i> Tasdiqlash
+          </button>
+          <button type="button" class="btn btn-outline-danger" onclick="rejectQuestion({{ loop.index0 }})">
+            <i class="bi bi-x-lg"></i> Rad etish
+          </button>
+        </div>
+      </div>
+
+      <input type="text" class="form-control fw-bold mb-2 bg-white" value="{{ q.text }}" id="qtext_{{ loop.index0 }}">
+
+      <div class="row g-2 small">
+        {% for opt in q.options %}
+        <div class="col-md-6">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text {% if opt.is_correct %}bg-success text-white fw-bold{% else %}bg-light{% endif %}">
+              {{ opt.key }})
+            </span>
+            <input type="text" class="form-control bg-white" value="{{ opt.text }}">
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Hidden Commit Form -->
+  <form id="aiCommitForm" method="POST" action="{{ url_for('admin.import_ai') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="commit">
+    <input type="hidden" name="questions_json" id="questionsJsonInput" value="">
+  </form>
+</div>
+
+<script>
+  const rawQuestions = {{ preview.questions|tojson }};
+  const approvedSet = new Set(rawQuestions.map((_, idx) => idx));
+
+  function toggleApprove(idx) {
+    if (approvedSet.has(idx)) {
+      approvedSet.delete(idx);
+      document.getElementById('qcard_' + idx).classList.add('opacity-50');
+    } else {
+      approvedSet.add(idx);
+      document.getElementById('qcard_' + idx).classList.remove('opacity-50');
+    }
+  }
+
+  function rejectQuestion(idx) {
+    approvedSet.delete(idx);
+    document.getElementById('qcard_' + idx).remove();
+  }
+
+  function commitApproved() {
+    const listToSave = [];
+    rawQuestions.forEach((q, idx) => {
+      if (approvedSet.has(idx)) {
+        const textElem = document.getElementById('qtext_' + idx);
+        if (textElem) q.text = textElem.value;
+        listToSave.push(q);
+      }
+    });
+
+    if (listToSave.length === 0) {
+      alert("Birorta ham tasdiqlangan savol yo'q.");
+      return;
+    }
+
+    document.getElementById('questionsJsonInput').value = JSON.stringify(listToSave);
+    document.getElementById('aiCommitForm').submit();
+  }
+</script>
+{% endif %}
+{% endblock %}

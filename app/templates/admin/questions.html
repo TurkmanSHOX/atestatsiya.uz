@@ -1,0 +1,127 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Savollar Banki{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0">Savollar Banki</h1>
+    <span class="text-muted small">Barcha fan va mavzular bo'yicha markazlashtirilgan savollar bazasi</span>
+  </div>
+  <div class="btn-toolbar gap-2">
+    <a href="{{ url_for('admin.import_excel') }}" class="btn btn-outline-success btn-sm fw-bold">
+      <i class="bi bi-file-earmark-excel me-1"></i> Excel Import
+    </a>
+    <a href="{{ url_for('admin.import_word') }}" class="btn btn-outline-primary btn-sm fw-bold">
+      <i class="bi bi-file-earmark-word me-1"></i> Word Import
+    </a>
+    <a href="{{ url_for('admin.import_ai') }}" class="btn btn-outline-warning btn-sm fw-bold text-dark">
+      <i class="bi bi-robot me-1"></i> AI Import
+    </a>
+    <a href="{{ url_for('admin.create_question') }}" class="btn btn-gov-primary btn-sm fw-bold">
+      <i class="bi bi-plus-lg me-1"></i> Savol qo'shish
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card border rounded-3 p-3 bg-white shadow-sm mb-4">
+  <form method="GET" action="{{ url_for('admin.questions_list') }}" class="row g-2 align-items-center">
+    <div class="col-md-4">
+      <input type="text" name="q" class="form-control form-control-sm" placeholder="Savol matni bo'yicha qidiruv..." value="{{ q_search or '' }}">
+    </div>
+    <div class="col-md-3">
+      <select name="subject_id" class="form-select form-select-sm">
+        <option value="">Barcha fanlar</option>
+        {% for s in subjects %}
+        <option value="{{ s.id }}" {% if current_subj == s.id|string %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="type" class="form-select form-select-sm">
+        <option value="">Barcha turlar</option>
+        {% for t_val, t_label in question_types %}
+        <option value="{{ t_val }}" {% if current_type == t_val %}selected{% endif %}>{{ t_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="difficulty" class="form-select form-select-sm">
+        <option value="">Barcha qiyinlik</option>
+        {% for d_val, d_label in diff_choices %}
+        <option value="{{ d_val }}" {% if current_diff == d_val %}selected{% endif %}>{{ d_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-1">
+      <button type="submit" class="btn btn-gov-primary btn-sm w-100">Filtr</button>
+    </div>
+  </form>
+</div>
+
+<!-- Questions Table -->
+<div class="card border rounded-3 bg-white shadow-sm overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light small">
+        <tr>
+          <th>#ID</th>
+          <th>Savol matni</th>
+          <th>Fan / Mavzu</th>
+          <th>Savol turi</th>
+          <th>Qiyinlik</th>
+          <th>Variantlar</th>
+          <th>Holat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in questions %}
+        <tr>
+          <td class="font-monospace small text-muted">#{{ q.id }}</td>
+          <td style="max-width: 400px;">
+            <strong class="d-block text-dark">{{ q.text[:120] }}{% if q.text|length > 120 %}...{% endif %}</strong>
+            {% if q.explanation %}
+            <span class="text-muted small">Izoh: {{ q.explanation[:60] }}...</span>
+            {% endif %}
+          </td>
+          <td class="small">
+            <span class="fw-semibold d-block">{{ q.subject.name if q.subject else '-' }}</span>
+            <span class="text-muted">{{ q.topic.name if q.topic else '-' }}</span>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border small">{{ q.question_type }}</span>
+          </td>
+          <td>
+            {% if q.difficulty == 'EASY' %}<span class="badge bg-success">Oson</span>
+            {% elif q.difficulty == 'HARD' %}<span class="badge bg-danger">Qiyin</span>
+            {% else %}<span class="badge bg-warning text-dark">O'rta</span>{% endif %}
+          </td>
+          <td class="small">
+            {{ q.options|length }} ta
+            {% for opt in q.options %}
+              {% if opt.is_correct %}
+              <span class="text-success fw-bold d-block">✓ {{ opt.option_key }}) {{ opt.text[:25] }}</span>
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td>
+            <span class="badge bg-success">{{ q.status }}</span>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-5 text-muted">
+            <i class="bi bi-folder2-open fs-1 d-block mb-2"></i>
+            Bu bo'limda hozircha savollar mavjud emas.
+            <div class="mt-3">
+              <a href="{{ url_for('admin.create_question') }}" class="btn btn-gov-primary btn-sm">Savol qo'shish</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

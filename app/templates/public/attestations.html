@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Attestatsiyalar Katalogi - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Attestatsiyalar Katalogi</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}">Bosh sahifa</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Attestatsiyalar</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4">
+    <!-- Filter Sidebar -->
+    <div class="col-lg-3">
+      <div class="card border rounded-3 p-4 bg-white shadow-sm">
+        <h5 class="fw-bold mb-3"><i class="bi bi-funnel me-2 text-success"></i> Filtrlash</h5>
+        <form method="GET" action="{{ url_for('public.attestations') }}">
+          <!-- Search input -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Qidiruv</label>
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="Nom yoki tavsif..." value="{{ search or '' }}">
+          </div>
+
+          <!-- Field filter -->
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Yo'nalish</label>
+            <select name="field" class="form-select form-select-sm">
+              <option value="">Barcha yo'nalishlar</option>
+              {% for f in fields %}
+              <option value="{{ f }}" {% if current_field == f %}selected{% endif %}>{{ f }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Price filter -->
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Maksimal narx (so'm)</label>
+            <input type="number" name="price" class="form-control form-control-sm" placeholder="Chegara yo'q" value="{{ request.args.get('price', '') }}">
+          </div>
+
+          <button type="submit" class="btn btn-gov-primary btn-sm w-100 mb-2">Qidirish</button>
+          <a href="{{ url_for('public.attestations') }}" class="btn btn-outline-secondary btn-sm w-100">Filtrni tozalash</a>
+        </form>
+      </div>
+    </div>
+
+    <!-- Attestations List -->
+    <div class="col-lg-9">
+      {% if attestations %}
+      <div class="row g-4">
+        {% for att in attestations %}
+        <div class="col-md-6">
+          <div class="card h-100 gov-card border rounded-3 p-4 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
+                {{ att.field_name }}
+              </span>
+              <span class="fw-bold text-primary">{{ att.formatted_price() }}</span>
+            </div>
+            <h5 class="fw-bold text-dark mb-2">{{ att.title }}</h5>
+            <p class="text-muted small flex-grow-1 mb-4">{{ att.short_description }}</p>
+
+            <div class="row g-2 text-muted small border-top pt-3 mb-4">
+              <div class="col-6"><i class="bi bi-question-circle me-1 text-success"></i> {{ att.questions_count }} ta savol</div>
+              <div class="col-6"><i class="bi bi-clock me-1 text-success"></i> {{ att.duration_minutes }} daqiqa</div>
+              <div class="col-6"><i class="bi bi-award me-1 text-success"></i> O'tish bali: {{ att.passing_score }}%</div>
+              <div class="col-6"><i class="bi bi-calendar me-1 text-success"></i> Sertifikat: {{ att.certificate_validity_months }} oy</div>
+            </div>
+
+            <a href="{{ url_for('public.attestation_detail', slug=att.slug) }}" class="btn btn-gov-primary w-100">
+              Batafsil ko'rish
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-5 bg-white border rounded-3 p-5">
+        <i class="bi bi-search text-muted fs-1 mb-3 d-block"></i>
+        <h5 class="fw-bold text-dark">Attestatsiyalar topilmadi</h5>
+        <p class="text-muted small">Tanlangan filtrlarga mos keluvchi attestatsiyalar mavjud emas. Filtr parametrlarini o'zgartirib ko'ring.</p>
+        <a href="{{ url_for('public.attestations') }}" class="btn btn-gov-outline btn-sm">Barcha attestatsiyalar</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

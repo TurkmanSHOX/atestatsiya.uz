@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Tizimga Kirish - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white">
+        <div class="text-center mb-4">
+          <div class="d-inline-flex p-3 bg-success bg-opacity-10 text-success rounded-circle mb-3">
+            <i class="bi bi-shield-lock-fill fs-2"></i>
+          </div>
+          <h3 class="fw-bold text-dark">Tizimga kirish</h3>
+          <p class="text-muted small">Professional attestatsiya portalidagi shaxsiy kabinetingiz</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next', '')) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-dark">Elektron pochta yoki telefon</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+              <input type="text" name="login" class="form-control" placeholder="nomi@example.com yoki +998..." required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-semibold text-dark mb-0">Parol</label>
+              <a href="#" class="small text-success text-decoration-none" onclick="alert('Parolni tiklash uchun qo\'llab-quvvatlash xizmatiga murojaat qiling.');">Unutdingizmi?</a>
+            </div>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted"><i class="bi bi-key"></i></span>
+              <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" name="remember" id="rememberMe">
+            <label class="form-check-label small text-muted cursor-pointer" for="rememberMe">
+              Meni eslab qolish
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-gov-primary w-100 btn-lg fw-bold mb-3 shadow-sm">
+            Kirish <i class="bi bi-box-arrow-in-right ms-1"></i>
+          </button>
+
+          <div class="text-center">
+            <span class="text-muted small">Hisobingiz yo'qmi?</span>
+            <a href="{{ url_for('auth.register') }}" class="small text-success fw-bold text-decoration-none ms-1">Ro'yxatdan o'tish</a>
+          </div>
+        </form>
+
+        <!-- Demo Accounts Hint for quick access -->
+        <div class="mt-4 pt-3 border-top text-center bg-light rounded p-2 small text-muted">
+          <strong>Demo hisoblar:</strong><br/>
+          Admin: <code>admin@example.com</code> / <code>Admin123!</code><br/>
+          Nomzod: <code>user@example.com</code> / <code>User123!</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

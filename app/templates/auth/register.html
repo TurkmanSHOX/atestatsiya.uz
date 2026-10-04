@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Ro'yxatdan O'tish - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      
+      <!-- Stepper Indicator -->
+      <div class="stepper-wrapper mb-4">
+        <div class="stepper-item {% if step == 1 %}active{% elif step > 1 %}completed{% endif %}">
+          <div class="step-counter">1</div>
+          <div class="step-name small fw-bold">Asosiy</div>
+        </div>
+        <div class="stepper-item {% if step == 2 %}active{% elif step > 2 %}completed{% endif %}">
+          <div class="step-counter">2</div>
+          <div class="step-name small fw-bold">Kasbiy</div>
+        </div>
+        <div class="stepper-item {% if step == 3 %}active{% elif step > 3 %}completed{% endif %}">
+          <div class="step-counter">3</div>
+          <div class="step-name small fw-bold">Hujjatlar</div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white">
+        <div class="text-center mb-4">
+          <h3 class="fw-bold text-dark">
+            {% if step == 1 %}1-Bosqich: Shaxsiy ma'lumotlar va hisob yaratish{% endif %}
+            {% if step == 2 %}2-Bosqich: Kasbiy va ish faoliyati ma'lumotlari{% endif %}
+            {% if step == 3 %}3-Bosqich: Tasdiqlovchi hujjatlarni yuklash{% endif %}
+          </h3>
+          <p class="text-muted small">Attestatsiyada ishtirok etish uchun ma'lumotlaringizni to'g'ri kiriting</p>
+        </div>
+
+        {% if step == 1 %}
+        <!-- STEP 1: Basic info -->
+        <form method="POST" action="{{ url_for('auth.register') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="current_step" value="1">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Familiya <span class="text-danger">*</span></label>
+              <input type="text" name="last_name" class="form-control" placeholder="Karimov" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Ism <span class="text-danger">*</span></label>
+              <input type="text" name="first_name" class="form-control" placeholder="Jasur" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Otasining ismi</label>
+              <input type="text" name="middle_name" class="form-control" placeholder="Anvar o'g'li">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Telefon raqam <span class="text-danger">*</span></label>
+              <input type="text" name="phone" class="form-control" placeholder="+998901234567" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Elektron pochta <span class="text-danger">*</span></label>
+              <input type="email" name="email" class="form-control" placeholder="jasur@example.com" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Parol <span class="text-danger">*</span></label>
+              <input type="password" name="password" class="form-control" placeholder="Kamida 8 ta belgi" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Parolni tasdiqlang <span class="text-danger">*</span></label>
+              <input type="password" name="confirm_password" class="form-control" placeholder="Parolni takrorlang" required>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Akkauntingiz bormi? <a href="{{ url_for('auth.login') }}" class="text-success fw-bold">Kirish</a></span>
+            <button type="submit" class="btn btn-gov-primary px-4 fw-bold">
+              Keyingi bosqich <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+          </div>
+        </form>
+
+        {% elif step == 2 %}
+        <!-- STEP 2: Professional Details -->
+        <form method="POST" action="{{ url_for('auth.register') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="current_step" value="2">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Tug'ilgan sana</label>
+              <input type="date" name="birth_date" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Jinsi</label>
+              <select name="gender" class="form-select">
+                <option value="ERKAK">Erkak</option>
+                <option value="AYOL">Ayol</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Hudud (Viloyat / Shahar)</label>
+              <select name="region" class="form-select">
+                <option value="Toshkent shahri">Toshkent shahri</option>
+                <option value="Toshkent viloyati">Toshkent viloyati</option>
+                <option value="Samarqand viloyati">Samarqand viloyati</option>
+                <option value="Farg'ona viloyati">Farg'ona viloyati</option>
+                <option value="Andijon viloyati">Andijon viloyati</option>
+                <option value="Namangan viloyati">Namangan viloyati</option>
+                <option value="Buxoro viloyati">Buxoro viloyati</option>
+                <option value="Qashqadaryo viloyati">Qashqadaryo viloyati</option>
+                <option value="Surxondaryo viloyati">Surxondaryo viloyati</option>
+                <option value="Xorazm viloyati">Xorazm viloyati</option>
+                <option value="Navoiy viloyati">Navoiy viloyati</option>
+                <option value="Jizzax viloyati">Jizzax viloyati</option>
+                <option value="Sirdaryo viloyati">Sirdaryo viloyati</option>
+                <option value="Qoraqalpog'iston Respublikasi">Qoraqalpog'iston Respublikasi</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Ish joyi / Tashkilot nomi</label>
+              <input type="text" name="organization" class="form-control" placeholder="Masalan: 12-umumta'lim maktabi">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Lavozim</label>
+              <input type="text" name="position" class="form-control" placeholder="Ona tili va adabiyot fani o'qituvchisi">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Mutaxassislik</label>
+              <input type="text" name="specialty" class="form-control" placeholder="Filologiya">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Ish staji (yillarda)</label>
+              <input type="number" name="experience_years" class="form-control" min="0" value="5">
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('auth.register', step=1) }}" class="btn btn-outline-secondary">Ortga</a>
+            <button type="submit" class="btn btn-gov-primary px-4 fw-bold">
+              Hisobni yaratish va Hujjatlarga o'tish <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+          </div>
+        </form>
+
+        {% elif step == 3 %}
+        <!-- STEP 3: Documents Upload -->
+        <form method="POST" action="{{ url_for('auth.register') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="current_step" value="3">
+
+          <div class="p-4 border rounded-3 bg-light mb-4 text-center">
+            <i class="bi bi-file-earmark-arrow-up text-success fs-1 mb-2 d-block"></i>
+            <h5 class="fw-bold">Pasport yoki Diplom nusxasini yuklang</h5>
+            <p class="text-muted small">Ruxsat etilgan formatlar: PDF, JPG, PNG (maksimal 10 MB)</p>
+
+            <div class="row g-3 justify-content-center mt-3">
+              <div class="col-md-5">
+                <label class="form-label small fw-semibold text-start w-100">Hujjat turi</label>
+                <select name="doc_type" class="form-select">
+                  <option value="PASSPORT">Pasport / ID-karta nusxasi</option>
+                  <option value="DIPLOM">Oliy / Maxsus ta'lim diplomi</option>
+                  <option value="MEHNAT_DAFTARCHASI">Mehnat daftarchasidan ko'chirma</option>
+                  <option value="BOSHQA">Boshqa malaka sertifikati</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold text-start w-100">Faylni tanlang</label>
+                <input type="file" name="document" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">Keyinroq yuklash</a>
+            <button type="submit" class="btn btn-gov-primary px-4 fw-bold">
+              Yakunlash va Kabinetga o'tish <i class="bi bi-check2-circle ms-1"></i>
+            </button>
+          </div>
+        </form>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

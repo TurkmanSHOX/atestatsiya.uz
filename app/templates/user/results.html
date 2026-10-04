@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Mening Natijalarim - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Mening Sinov Natijalarim Tarixi</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Kabinet</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Natijalarim</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  {% if results %}
+  <div class="card border rounded-3 p-4 bg-white shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Attestatsiya</th>
+            <th>Sana</th>
+            <th class="text-center">Savollar</th>
+            <th class="text-center">To'g'ri</th>
+            <th class="text-center">Natija</th>
+            <th class="text-center">Holati</th>
+            <th class="text-end">Harakatlar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr>
+            <td>
+              <strong class="d-block text-dark">{{ r.attestation.title }}</strong>
+              <span class="text-muted small">Vaqt: {{ r.formatted_completion_time() }}</span>
+            </td>
+            <td>{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td class="text-center">{{ r.total_questions }}</td>
+            <td class="text-center fw-bold text-success">{{ r.correct_answers }}</td>
+            <td class="text-center">
+              <span class="fs-6 fw-bold {% if r.is_passed %}text-success{% else %}text-danger{% endif %}">
+                {{ r.percentage }}%
+              </span>
+            </td>
+            <td class="text-center">
+              {% if r.is_passed %}
+              <span class="badge bg-success">O'tdi</span>
+              {% else %}
+              <span class="badge bg-danger">O'tmadi</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('user.result_detail', result_id=r.id) }}" class="btn btn-sm btn-outline-primary">
+                Tafsilotlar
+              </a>
+              {% if r.is_passed and r.certificate %}
+              <a href="/{{ r.certificate.pdf_path }}" target="_blank" class="btn btn-sm btn-gov-primary">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card border rounded-3 p-5 text-center bg-white shadow-sm">
+    <i class="bi bi-journal-x text-muted fs-1 mb-3 d-block"></i>
+    <h4 class="fw-bold text-dark">Hozircha natijalar mavjud emas</h4>
+    <p class="text-muted small">Siz hali birorta ham attestatsiya imtihonini yakunlamadingiz.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

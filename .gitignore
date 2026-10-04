@@ -1,0 +1,44 @@
+# Python virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Flask instance & database files
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+
+# Uploaded test media and user documents (keep structure)
+app/static/uploads/documents/*
+!app/static/uploads/documents/.gitkeep
+app/static/uploads/receipts/*
+!app/static/uploads/receipts/.gitkeep
+app/static/uploads/certificates/*
+!app/static/uploads/certificates/.gitkeep
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini

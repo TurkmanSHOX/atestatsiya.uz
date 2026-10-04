@@ -1,0 +1,106 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Test va Blueprint Konstruktori{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0">Testlar va Blueprint Boshqaruvi</h1>
+    <span class="text-muted small">Imtihon strukturasi, fan va qiyinlik kvotalarini belgilash</span>
+  </div>
+</div>
+
+<div class="card border rounded-3 bg-white shadow-sm overflow-hidden mb-5">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light small">
+        <tr>
+          <th>Test nomi</th>
+          <th>Attestatsiya</th>
+          <th>Savollar</th>
+          <th>Vaqt</th>
+          <th>Blueprint qoidalari</th>
+          <th>Holat</th>
+          <th class="text-end">Harakatlar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tests %}
+        <tr>
+          <td><strong class="text-dark">{{ t.title }}</strong></td>
+          <td>{{ t.attestation.title }}</td>
+          <td>{{ t.blueprint.total_questions if t.blueprint else '-' }} ta</td>
+          <td>{{ t.duration_minutes }} daqiqa</td>
+          <td>
+            {% if t.blueprint and t.blueprint.rules %}
+              <span class="badge bg-info text-dark">{{ t.blueprint.rules|length }} ta qoida</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Qoidalar yo'q</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {% if t.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ t.status }}
+            </span>
+          </td>
+          <td class="text-end">
+            <button type="button" class="btn btn-sm btn-outline-info" onclick="validateTest({{ t.id }})">
+              <i class="bi bi-shield-check"></i> Tekshirish
+            </button>
+            {% if t.status != 'ACTIVE' %}
+            <form method="POST" action="{{ url_for('admin.activate_test', test_id=t.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-success">
+                <i class="bi bi-play-fill"></i> Faollashtirish
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-4 text-muted">Testlar topilmadi.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Validation Result Modal -->
+<div class="modal fade" id="validateModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content rounded-3 border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Test Validatsiyasi Natijasi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="validateBody">
+        Yuklanmoqda...
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function validateTest(testId) {
+    const modal = new bootstrap.Modal(document.getElementById('validateModal'));
+    const body = document.getElementById('validateBody');
+    body.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-success"></div><div class="small mt-2">Savollar yetarliligi tekshirilmoqda...</div></div>';
+    modal.show();
+
+    try {
+      const res = await fetch(`/admin/tests/${testId}/validate`);
+      const json = await res.json();
+      if (json.valid) {
+        body.innerHTML = '<div class="alert alert-success mb-0"><i class="bi bi-check-circle-fill me-2 fs-5"></i> <strong>A'lo darajada!</strong> Barcha blueprint qoidalariga mos yetarli faol savollar mavjud. Testni faollashtirish mumkin.</div>';
+      } else {
+        let reasonsHtml = json.reasons.map(r => `<li>${r}</li>`).join('');
+        body.innerHTML = `<div class="alert alert-danger mb-0"><h6 class="fw-bold"><i class="bi bi-x-octagon-fill me-2"></i> Testni faollashtirish mumkin emas:</h6><ul class="mb-0 ps-3 small">${reasonsHtml}</ul></div>`;
+      }
+    } catch (e) {
+      body.innerHTML = '<div class="alert alert-danger mb-0">Tekshirishda xatolik yuz berdi.</div>';
+    }
+  }
+</script>
+{% endblock %}

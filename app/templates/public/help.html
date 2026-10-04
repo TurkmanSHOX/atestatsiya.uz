@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Yordam va Yo'riqnoma - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Texnik Yo'riqnoma va Yordam</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}">Bosh sahifa</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Yordam</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card border rounded-3 p-4 bg-white shadow-sm mb-4">
+        <h4 class="fw-bold text-dark mb-3">Tizim talablari</h4>
+        <ul class="text-secondary">
+          <li class="mb-2"><strong>Qurilma:</strong> Shaxsiy kompyuter, noutbuk (kamera va mikrofon bilan ta'minlangan).</li>
+          <li class="mb-2"><strong>Brauzer:</strong> Google Chrome (oxirgi versiya), Mozilla Firefox, Microsoft Edge yoki Safari.</li>
+          <li class="mb-2"><strong>Internet tezligi:</strong> Kamida 2 Mbit/s barqaror internet aloqasi.</li>
+          <li class="mb-2"><strong>Kamera ruxsati:</strong> Brauzer sozlamalarida kamera va mikrofon ruxsatlari yoqilgan bo'lishi shart.</li>
+        </ul>
+      </div>
+
+      <div class="card border rounded-3 p-4 bg-white shadow-sm">
+        <h4 class="fw-bold text-dark mb-3">Bosqichma-bosqich qo'llanma</h4>
+        <ol class="text-secondary">
+          <li class="mb-2">Portalda ro'yxatdan o'ting va profilingizni to'ldiring.</li>
+          <li class="mb-2">Attestatsiyalar bo'limidan o'z mutaxassisligingizga mos yo'nalishni tanlab, "Ariza topshirish" tugmasini bosing.</li>
+          <li class="mb-2">Hujjatlaringizni yuklang va ko'rsatilgan to'lov rekvizitlariga to'lov qilib, chekni biriktiring.</li>
+          <li class="mb-2">Administrator tasdiqlagach, "Texnik tekshiruv"dan o'ting va imtihonni boshlang.</li>
+          <li class="mb-2">Imtihon yakunlangach, natijani ko'ring va elektron sertifikatni yuklab oling.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border rounded-3 p-4 bg-white shadow-sm">
+        <h5 class="fw-bold mb-3"><i class="bi bi-headset text-success me-2"></i> Bog'lanish</h5>
+        <p class="small text-muted mb-3">Agar sinov jarayonida texnik nosozlik yuz bersa, call-markazimizga murojaat qiling:</p>
+        <p class="mb-2 fw-bold text-success"><i class="bi bi-telephone me-2"></i> {{ support_phone }}</p>
+        <p class="mb-3 fw-bold text-dark"><i class="bi bi-envelope me-2"></i> {{ support_email }}</p>
+        <a href="{{ url_for('public.contact') }}" class="btn btn-gov-outline w-100 btn-sm">Murojaat yuborish</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

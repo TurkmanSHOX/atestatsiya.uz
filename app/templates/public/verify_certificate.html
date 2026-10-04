@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Sertifikatni Tekshirish - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Elektron Sertifikatni Tekshirish</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}">Bosh sahifa</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Sertifikat tekshirish</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      
+      <!-- Search Form -->
+      <div class="card border rounded-3 p-4 bg-white shadow-sm mb-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-qr-code-scan text-success me-2"></i> Sertifikat raqamini kiriting</h5>
+        <form method="GET" action="{{ url_for('public.verify_certificate', cert_no='check') }}" onsubmit="event.preventDefault(); window.location.href='/verify-certificate/' + document.getElementById('certInput').value.trim();">
+          <div class="input-group">
+            <input type="text" id="certInput" class="form-control form-control-lg" placeholder="Masalan: AT-2026-123456 yoki QR UUID" value="{{ query if query != 'check' else '' }}" required>
+            <button type="submit" class="btn btn-gov-primary px-4 fw-bold">
+              <i class="bi bi-search me-1"></i> Tekshirish
+            </button>
+          </div>
+          <span class="text-muted small mt-2 d-block">QR kod orqali skaner qilinganda ushbu sahifa avtomatik ochiladi.</span>
+        </form>
+      </div>
+
+      <!-- Verification Result -->
+      {% if query != 'check' %}
+        {% if result and result.found %}
+          {% set cert = result.certificate %}
+          <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            {% if cert.status == 'ACTIVE' and cert.is_valid %}
+              <div class="bg-success text-white p-4 text-center">
+                <i class="bi bi-patch-check-fill fs-1 d-block mb-2"></i>
+                <h3 class="fw-bold mb-0">SERTIFIKAT HAQIQIY VA QONUNIY</h3>
+                <span class="opacity-75 small">Davlat professional attestatsiya reyestridan tasdiqlangan</span>
+              </div>
+            {% else %}
+              <div class="bg-danger text-white p-4 text-center">
+                <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
+                <h3 class="fw-bold mb-0">USHBU SERTIFIKAT HOZIR AMAL QILMAYDI</h3>
+                <span class="opacity-75 small">Holati: {{ cert.status }}</span>
+              </div>
+            {% endif %}
+
+            <div class="p-4 p-md-5 bg-white">
+              <div class="row g-4">
+                <div class="col-sm-6">
+                  <span class="text-muted small d-block">Sertifikat egasi (F.I.Sh.):</span>
+                  <h5 class="fw-bold text-dark mt-1">{{ cert.user_name }}</h5>
+                </div>
+                <div class="col-sm-6">
+                  <span class="text-muted small d-block">Sertifikat raqami:</span>
+                  <h5 class="fw-bold text-success mt-1 font-monospace">{{ cert.certificate_number }}</h5>
+                </div>
+                <div class="col-12 border-top pt-3">
+                  <span class="text-muted small d-block">Attestatsiya dasturi:</span>
+                  <h5 class="fw-bold text-dark mt-1">«{{ cert.attestation_title }}»</h5>
+                </div>
+                <div class="col-sm-4 border-top pt-3">
+                  <span class="text-muted small d-block">To'plangan natija:</span>
+                  <h4 class="fw-bold text-primary mt-1">{{ cert.percentage }}%</h4>
+                </div>
+                <div class="col-sm-4 border-top pt-3">
+                  <span class="text-muted small d-block">Berilgan sana:</span>
+                  <h6 class="fw-bold text-dark mt-1">{{ cert.issue_date }}</h6>
+                </div>
+                <div class="col-sm-4 border-top pt-3">
+                  <span class="text-muted small d-block">Amal qilish muddati:</span>
+                  <h6 class="fw-bold text-dark mt-1">{{ cert.valid_until }} gacha</h6>
+                </div>
+              </div>
+
+              {% if cert.pdf_path %}
+              <div class="border-top mt-4 pt-4 text-center">
+                <a href="/{{ cert.pdf_path }}" target="_blank" class="btn btn-outline-success fw-bold">
+                  <i class="bi bi-file-earmark-pdf me-2"></i> Asl nusxasini (PDF) yuklab olish
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="card border rounded-3 p-5 text-center bg-white shadow-sm">
+            <i class="bi bi-x-circle text-danger fs-1 mb-3 d-block"></i>
+            <h4 class="fw-bold text-dark mb-2">Sertifikat topilmadi</h4>
+            <p class="text-muted mb-0">«{{ query }}» raqami bo'yicha hech qanday sertifikat rasmiy bazada ro'yxatga olinmagan yoki bekor qilingan.</p>
+          </div>
+        {% endif %}
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

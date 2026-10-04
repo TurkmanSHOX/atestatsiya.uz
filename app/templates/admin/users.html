@@ -1,0 +1,93 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Foydalanuvchilar Boshqaruvi{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0">Foydalanuvchilar Ro'yxati</h1>
+    <span class="text-muted small">Tizimda ro'yxatdan o'tgan nomzodlarni boshqarish</span>
+  </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="card border rounded-3 p-3 bg-white shadow-sm mb-4">
+  <form method="GET" action="{{ url_for('admin.users_list') }}" class="row g-2 align-items-center">
+    <div class="col-md-6">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+        <input type="text" name="q" class="form-control" placeholder="F.I.Sh., telefon yoki email bo'yicha qidiruv..." value="{{ q or '' }}">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select form-select-sm">
+        <option value="">Barcha holatlar</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Faqat faollar</option>
+        <option value="blocked" {% if status_filter == 'blocked' %}selected{% endif %}>Bloklanganlar</option>
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-gov-primary btn-sm w-100">Filtrlash</button>
+      <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-secondary btn-sm">Tozalash</a>
+    </div>
+  </form>
+</div>
+
+<!-- Users Table -->
+<div class="card border rounded-3 bg-white shadow-sm overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light small">
+        <tr>
+          <th>F.I.Sh.</th>
+          <th>Telefon</th>
+          <th>Email</th>
+          <th>Hudud / Ish joyi</th>
+          <th>Ro'yxatdan o'tgan</th>
+          <th>Holat</th>
+          <th class="text-end">Harakatlar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>
+            <strong class="d-block text-dark">{{ u.full_name }}</strong>
+            <span class="text-muted small">{{ u.position or 'Lavozim yo\'q' }}</span>
+          </td>
+          <td class="font-monospace small">{{ u.phone }}</td>
+          <td class="small">{{ u.email }}</td>
+          <td class="small">{{ u.region or '-' }} / {{ u.organization or '-' }}</td>
+          <td class="small text-muted">{{ u.created_at.strftime('%d.%m.%Y') if u.created_at else '-' }}</td>
+          <td>
+            {% if u.is_active %}
+            <span class="badge bg-success">Faol</span>
+            {% else %}
+            <span class="badge bg-danger">Bloklangan</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=u.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              {% if u.is_active %}
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Bloklash" onclick="return confirm('Haqiqatan ham ushbu foydalanuvchini bloklamoqchimisiz?');">
+                <i class="bi bi-slash-circle me-1"></i> Bloklash
+              </button>
+              {% else %}
+              <button type="submit" class="btn btn-sm btn-outline-success" title="Faollashtirish">
+                <i class="bi bi-check-circle me-1"></i> Faollashtirish
+              </button>
+              {% endif %}
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-4 text-muted">Foydalanuvchilar topilmadi.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

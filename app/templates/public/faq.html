@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Ko'p Beriladigan Savollar (FAQ) - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Ko'p Beriladigan Savollar</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}">Bosh sahifa</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Savol-javob</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="accordion accordion-flush shadow-sm rounded-3 overflow-hidden border" id="faqAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+              Attestatsiyada qatnashish uchun qanday hujjatlar talab etiladi?
+            </button>
+          </h2>
+          <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+            <div class="accordion-body text-secondary">
+              Nomzod ro'yxatdan o'tgach, shaxsini tasdiqlovchi hujjat (Pasport yoki ID-karta) hamda oliy/o'rta-maxsus ta'lim to'g'risidagi diplom nusxasini (PDF, JPG yoki PNG formatida) shaxsiy kabinetiga yuklashi lozim.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+              To'lov qanday amalga oshiriladi va chek qayerga yuklanadi?
+            </button>
+          </h2>
+          <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body text-secondary">
+              Attestatsiya yo'nalishini tanlaganingizdan so'ng sizga to'lov rekvizitlari va karta raqami ko'rsatiladi. To'lovni bank ilovalari (Click, Payme, bank kassasi) orqali to'lab, chek nusxasini shu sahifaning o'zida yuklaysiz. Administrator tekshirib tasdiqlagach, imtihonga kirish ochiladi.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+              Imtihon paytida internet uzilib qolsa nima bo'ladi?
+            </button>
+          </h2>
+          <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body text-secondary">
+              Tizim xavfsiz sessiya tiklash mexanizmiga ega. Internet qayta ulangan zahoti oxirgi saqlangan holatdan davom ettirishingiz mumkin. Server vaqti orqada qolmaydi, belgilangan umumiy vaqt davomida sinovni yakunlashingiz zarur.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+              Sertifikatning qonuniy kuchi qanday tekshiriladi?
+            </button>
+          </h2>
+          <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body text-secondary">
+              Har bir berilgan sertifikatda unikal QR-kod va raqam mavjud. Istalgan tashkilot yoki ish beruvchi smartfon kamerasi orqali QR-kodni skaner qilib, davlat reyestridan sertifikat haqiqiyligini tekshirishi mumkin.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

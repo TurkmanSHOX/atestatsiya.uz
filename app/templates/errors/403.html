@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Kirish Taqiqlangan - 403{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="py-5">
+    <div class="display-1 fw-bold text-danger mb-3">403</div>
+    <h3 class="fw-bold text-dark mb-3">Ushbu sahifaga kirish huquqingiz mavjud emas</h3>
+    <p class="text-muted small max-w-500 mx-auto mb-4">
+      Siz murojaat qilgan bo'lim faqat tegishli vakolatga ega administratorlar yoki tasdiqlangan foydalanuvchilar uchun mo'ljallangan.
+    </p>
+    <a href="{{ url_for('public.index') }}" class="btn btn-gov-primary px-4">
+      <i class="bi bi-house me-1"></i> Bosh sahifaga qaytish
+    </a>
+  </div>
+</div>
+{% endblock %}
