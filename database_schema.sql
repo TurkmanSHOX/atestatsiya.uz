@@ -135,11 +135,31 @@ CREATE TABLE `question_options` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `question_id` INT NOT NULL,
     `key` VARCHAR(10) NOT NULL,
-    `text` TEXT NOT NULL,
+    `text` TEXT NULL,
     `is_correct` BOOLEAN DEFAULT FALSE,
+    `order_num` INT DEFAULT 0,
     `explanation` TEXT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE CASCADE,
     INDEX `idx_options_question` (`question_id`, `is_correct`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7.1. Javob varianti medialari (Question Option Media)
+DROP TABLE IF EXISTS `question_option_media`;
+CREATE TABLE `question_option_media` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `option_id` INT NOT NULL,
+    `file_path` VARCHAR(255) NOT NULL,
+    `file_url` VARCHAR(255) NULL,
+    `original_name` VARCHAR(255) NULL,
+    `mime_type` VARCHAR(100) NULL,
+    `file_size` INT NULL,
+    `media_type` VARCHAR(20) DEFAULT 'IMAGE',
+    `sort_order` INT DEFAULT 0,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`option_id`) REFERENCES `question_options`(`id`) ON DELETE CASCADE,
+    INDEX `idx_option_media_option` (`option_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. Savol versiyalari (Question Versions)
@@ -163,9 +183,14 @@ DROP TABLE IF EXISTS `question_media`;
 CREATE TABLE `question_media` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `question_id` INT NOT NULL,
-    `media_type` ENUM('IMAGE', 'AUDIO', 'VIDEO') NOT NULL,
+    `media_type` VARCHAR(20) NOT NULL DEFAULT 'IMAGE',
     `file_path` VARCHAR(255) NOT NULL,
+    `file_url` VARCHAR(255) NULL,
+    `original_name` VARCHAR(255) NULL,
+    `mime_type` VARCHAR(100) NULL,
+    `file_size` INT NULL,
     `caption` VARCHAR(255) NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

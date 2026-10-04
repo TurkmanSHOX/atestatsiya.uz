@@ -149,6 +149,26 @@
     </div>
   </div>
 
+  <!-- Image Zoom Modal -->
+  <div class="modal fade" id="imageZoomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content border-0 shadow-lg bg-dark text-white rounded-4 overflow-hidden">
+        <div class="modal-header border-0 pb-0">
+          <h6 class="modal-title text-white-50" id="imageZoomTitle">Tasvirni ko'rish</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center p-4">
+          <img id="imageZoomSrc" src="" alt="Kattalashtirilgan rasm" class="img-fluid rounded-3 shadow" style="max-height: 80vh; object-fit: contain;">
+        </div>
+        <div class="modal-footer border-0 pt-0 justify-content-center">
+          <button type="button" class="btn btn-outline-light btn-sm px-4 rounded-pill" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg me-1"></i> Yopish
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Passing variables to JS -->
   <script>
     window.EXAM_CONFIG = {

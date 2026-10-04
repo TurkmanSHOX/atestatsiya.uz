@@ -124,6 +124,118 @@
     </div>
   </div>
 
+  <!-- Savollar va javoblar tahlili -->
+  {% if result.session and result.session.answers %}
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-5 bg-white">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+      <h4 class="fw-bold mb-0"><i class="bi bi-card-checklist text-success me-2"></i> Savollar va Javoblar Tahlili</h4>
+      <span class="badge bg-light text-dark border px-3 py-2">Jami: {{ result.session.answers|length }} ta savol</span>
+    </div>
+
+    <div class="d-flex flex-column gap-4">
+      {% for ans in result.session.answers|sort(attribute='id') %}
+      {% set q = ans.question %}
+      <div class="p-4 rounded-4 border {% if ans.is_correct %}border-success-subtle bg-success bg-opacity-10{% elif ans.selected_option_ids %}border-danger-subtle bg-danger bg-opacity-10{% else %}border-secondary-subtle bg-light{% endif %}">
+        
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <span class="badge bg-dark px-3 py-2 fs-6">#{{ loop.index }}-savol</span>
+          <div>
+            {% if ans.is_correct %}
+              <span class="badge bg-success fs-6 px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i> To'g'ri javob</span>
+            {% elif ans.selected_option_ids %}
+              <span class="badge bg-danger fs-6 px-3 py-2"><i class="bi bi-x-circle-fill me-1"></i> Noto'g'ri javob</span>
+            {% else %}
+              <span class="badge bg-secondary fs-6 px-3 py-2"><i class="bi bi-dash-circle me-1"></i> Javob berilmagan</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if q.first_image_url %}
+        <div class="text-center my-3 position-relative d-inline-block">
+          <img src="{{ q.first_image_url }}" alt="Savol rasmi" class="img-fluid rounded-3 border shadow-sm bg-white" style="max-height: 240px; object-fit: contain; cursor: zoom-in;" onclick="openResultImageModal('{{ q.first_image_url }}', '#{{ loop.index }}-savol rasmi')">
+          <button type="button" class="btn btn-sm btn-dark bg-opacity-75 border-0 position-absolute bottom-0 end-0 m-1 rounded-circle text-white" onclick="openResultImageModal('{{ q.first_image_url }}', '#{{ loop.index }}-savol rasmi')">
+            <i class="bi bi-arrows-fullscreen"></i>
+          </button>
+        </div>
+        {% endif %}
+
+        <h5 class="fw-bold text-dark mb-4 lh-base">{{ q.text }}</h5>
+
+        <!-- Variantlar -->
+        <div class="row g-3 mb-3">
+          {% for opt in q.options %}
+          {% set is_selected = ans.selected_option_ids and opt.id in ans.selected_option_ids %}
+          <div class="col-md-6">
+            <div class="p-3 rounded-3 border h-100 {% if is_selected and opt.is_correct %}bg-success text-white shadow-sm border-success{% elif is_selected and not opt.is_correct %}bg-danger text-white shadow-sm border-danger{% elif opt.is_correct %}bg-white border-success border-2 shadow-sm text-dark{% else %}bg-white text-muted border-light-subtle{% endif %}">
+              <div class="d-flex align-items-baseline mb-1">
+                <span class="fw-bold me-2 fs-6 {% if is_selected %}text-white{% elif opt.is_correct %}text-success{% else %}text-muted{% endif %}">{{ opt.key }})</span>
+                {% if opt.text %}
+                <span class="flex-grow-1 {% if is_selected %}text-white fw-bold{% elif opt.is_correct %}text-dark fw-bold{% endif %}">{{ opt.text }}</span>
+                {% endif %}
+                {% if is_selected and opt.is_correct %}
+                  <span class="badge bg-white text-success ms-auto"><i class="bi bi-check2 me-1"></i> Sizning to'g'ri javobingiz</span>
+                {% elif is_selected and not opt.is_correct %}
+                  <span class="badge bg-white text-danger ms-auto"><i class="bi bi-x-lg me-1"></i> Sizning xato javobingiz</span>
+                {% elif opt.is_correct %}
+                  <span class="badge bg-success ms-auto"><i class="bi bi-check-circle-fill me-1"></i> To'g'ri javob</span>
+                {% endif %}
+              </div>
+
+              {% if opt.first_image_url %}
+              <div class="position-relative mt-2 p-1 bg-white rounded border text-center" style="max-width: 220px;">
+                <img src="{{ opt.first_image_url }}" alt="Variant {{ opt.key }} rasmi" class="img-fluid rounded" style="max-height: 140px; object-fit: contain; cursor: zoom-in;" onclick="openResultImageModal('{{ opt.first_image_url }}', 'Variant {{ opt.key }} rasmi')">
+                <button type="button" class="btn btn-sm btn-light border position-absolute top-0 end-0 m-1 shadow-sm opacity-75" title="Kattalashtirish" onclick="openResultImageModal('{{ opt.first_image_url }}', 'Variant {{ opt.key }} rasmi')">
+                  <i class="bi bi-arrows-fullscreen"></i>
+                </button>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if q.explanation %}
+        <div class="p-3 bg-white rounded-3 small border-start border-4 border-success text-dark mt-2 shadow-sm">
+          <strong class="text-success"><i class="bi bi-info-circle me-1"></i> Tushuntirish / Izoh:</strong> {{ q.explanation }}
+        </div>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Image Zoom Modal -->
+  <div class="modal fade" id="resultZoomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content border-0 shadow-lg bg-dark text-white rounded-4 overflow-hidden">
+        <div class="modal-header border-0 pb-0">
+          <h6 class="modal-title text-white-50" id="resultZoomTitle">Tasvirni ko'rish</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center p-4">
+          <img id="resultZoomSrc" src="" alt="Kattalashtirilgan rasm" class="img-fluid rounded-3 shadow" style="max-height: 80vh; object-fit: contain;">
+        </div>
+        <div class="modal-footer border-0 pt-0 justify-content-center">
+          <button type="button" class="btn btn-outline-light btn-sm px-4 rounded-pill" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg me-1"></i> Yopish
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openResultImageModal(src, title) {
+      const modalEl = document.getElementById('resultZoomModal');
+      if (!modalEl) return;
+      document.getElementById('resultZoomSrc').src = src;
+      document.getElementById('resultZoomTitle').innerText = title || "Tasvirni ko'rish";
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  </script>
+
   <!-- Boshqaruv Tugmalari -->
   <div class="d-flex flex-wrap gap-3 justify-content-center">
     <a href="{{ url_for('user.mistakes_view') }}" class="btn btn-outline-danger btn-lg fw-bold px-4">

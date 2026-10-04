@@ -1,125 +1,276 @@
 {% extends "admin/layout.html" %}
 
-{% block title %}Yangi Savol Yaratish{% endblock %}
+{% block title %}{% if question %}Savolni Tahrirlash #{{ question.id }}{% else %}Yangi Savol Yaratish{% endif %} - Admin Paneli{% endblock %}
 
 {% block admin_content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
   <div>
-    <h1 class="h3 fw-bold text-dark mb-0">Yangi Savol Qo'shish</h1>
-    <span class="text-muted small">Savollar bankiga yangi test topshirig'i kiritish</span>
+    <h1 class="h3 fw-bold text-dark mb-0">
+      {% if question %}
+      <i class="bi bi-pencil-square text-primary me-2"></i> Savolni Tahrirlash (v{{ question.version }})
+      {% else %}
+      <i class="bi bi-plus-circle text-success me-2"></i> Yangi Savol Qo'shish
+      {% endif %}
+    </h1>
+    <span class="text-muted small">Savol matni, tushuntirish va har bir variant uchun mustaqil rasm biriktirish</span>
   </div>
   <a href="{{ url_for('admin.questions_list') }}" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-arrow-left me-1"></i> Savollar bankiga qaytish
   </a>
 </div>
 
-<div class="card border rounded-3 p-4 bg-white shadow-sm max-w-900">
-  <form method="POST" action="{{ url_for('admin.create_question') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<form method="POST" enctype="multipart/form-data" class="card border rounded-3 p-4 bg-white shadow-sm mb-5">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label small fw-semibold">Fan <span class="text-danger">*</span></label>
-        <select name="subject_id" class="form-select" required>
-          {% for s in subjects %}
-          <option value="{{ s.id }}">{{ s.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
+  <div class="row g-4">
+    <!-- Fan va Mavzu tanlash -->
+    <div class="col-md-6">
+      <label class="form-label small fw-bold">Fan <span class="text-danger">*</span></label>
+      <select name="subject_id" id="subjectSelect" class="form-select" required>
+        {% for s in subjects %}
+        <option value="{{ s.id }}" {% if question and question.subject_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-      <div class="col-md-6">
-        <label class="form-label small fw-semibold">Mavzu <span class="text-danger">*</span></label>
-        <select name="topic_id" class="form-select" required>
-          {% for t in topics %}
-          <option value="{{ t.id }}">{{ t.name }} ({{ t.subject.name if t.subject else '' }})</option>
-          {% endfor %}
-        </select>
-      </div>
+    <div class="col-md-6">
+      <label class="form-label small fw-bold">Mavzu <span class="text-danger">*</span></label>
+      <select name="topic_id" id="topicSelect" class="form-select" required>
+        {% for t in topics %}
+        <option value="{{ t.id }}" {% if question and question.topic_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Savol turi <span class="text-danger">*</span></label>
-        <select name="question_type" class="form-select">
-          {% for val, label in q_types %}
-          <option value="{{ val }}">{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
+    <!-- Savol turi, Qiyinlik va Ball -->
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">Savol turi <span class="text-danger">*</span></label>
+      <select name="question_type" id="questionTypeSelect" class="form-select" required>
+        <option value="SINGLE_CHOICE" {% if not question or question.question_type == 'SINGLE_CHOICE' %}selected{% endif %}>Bitta to'g'ri javobli (Single choice)</option>
+        <option value="MULTIPLE_CHOICE" {% if question and question.question_type == 'MULTIPLE_CHOICE' %}selected{% endif %}>Bir nechta to'g'ri javobli (Multiple choice)</option>
+        <option value="TRUE_FALSE" {% if question and question.question_type == 'TRUE_FALSE' %}selected{% endif %}>To'g'ri / Noto'g'ri (True/False)</option>
+      </select>
+    </div>
 
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Qiyinlik darajasi</label>
-        <select name="difficulty" class="form-select">
-          <option value="EASY">Oson</option>
-          <option value="MEDIUM" selected>O'rta</option>
-          <option value="HARD">Qiyin</option>
-        </select>
-      </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">Qiyinlik darajasi</label>
+      <select name="difficulty" class="form-select">
+        <option value="EASY" {% if question and question.difficulty == 'EASY' %}selected{% endif %}>Oson (Easy)</option>
+        <option value="MEDIUM" {% if not question or question.difficulty == 'MEDIUM' %}selected{% endif %}>O'rta (Medium)</option>
+        <option value="HARD" {% if question and question.difficulty == 'HARD' %}selected{% endif %}>Qiyin (Hard)</option>
+      </select>
+    </div>
 
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Ball qiymati</label>
-        <input type="number" step="0.5" name="points" class="form-control" value="1.0" min="0.5" required>
-      </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">Ball qiymati</label>
+      <input type="number" step="0.5" name="points" class="form-control" value="{{ question.points if question else '1.0' }}" min="0.5" required>
+    </div>
 
-      <div class="col-12">
-        <label class="form-label small fw-semibold">Savol matni <span class="text-danger">*</span></label>
-        <textarea name="text" class="form-control" rows="3" placeholder="Savol matnini kiriting..." required></textarea>
-      </div>
+    <!-- Savol Asosiy Rasmi (Question Image) -->
+    <div class="col-12">
+      <div class="p-3 border rounded-3 bg-light">
+        <label class="form-label small fw-bold d-block mb-1">
+          <i class="bi bi-image text-primary me-1"></i> Savolga asosiy rasm biriktirish (ixtiyoriy)
+        </label>
+        <span class="text-muted small d-block mb-2">Qo'llab-quvvatlanadi: JPG, PNG, WEBP (maksimal 5 MB). Rasm avtomatik optimallashtiriladi.</span>
 
-      <div class="col-12">
-        <label class="form-label small fw-semibold">Izoh yoki yechim tushuntirishi</label>
-        <textarea name="explanation" class="form-control" rows="2" placeholder="To'g'ri javob sababi (ixtiyoriy)..."></textarea>
-      </div>
-
-      <!-- Variants Section -->
-      <div class="col-12 border-top pt-3 mt-4">
-        <h6 class="fw-bold text-dark mb-3">Javob variantlari (To'g'ri javobni tanlang):</h6>
-
-        <div class="row g-2 mb-2 align-items-center">
-          <div class="col-auto">
-            <input class="form-check-input" type="radio" name="correct_opt" value="0" checked required>
-            <strong>A)</strong>
-          </div>
-          <div class="col">
-            <input type="text" name="opt_text" class="form-control" placeholder="A variant matni..." required>
-          </div>
-        </div>
-
-        <div class="row g-2 mb-2 align-items-center">
-          <div class="col-auto">
-            <input class="form-check-input" type="radio" name="correct_opt" value="1">
-            <strong>B)</strong>
-          </div>
-          <div class="col">
-            <input type="text" name="opt_text" class="form-control" placeholder="B variant matni..." required>
+        {% if question and question.first_image_url %}
+        <div class="d-flex align-items-center gap-3 mb-2 p-2 bg-white rounded border">
+          <img src="{{ question.first_image_url }}" alt="Savol rasmi" class="img-thumbnail" style="max-height: 80px; max-width: 120px; object-fit: contain;">
+          <div>
+            <div class="small fw-bold text-dark">Amaldagi rasm biriktirilgan</div>
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="checkbox" name="delete_question_image" id="deleteQImage" value="1">
+              <label class="form-check-label small text-danger fw-semibold" for="deleteQImage">
+                <i class="bi bi-trash me-1"></i> Ushbu rasmni o'chirish
+              </label>
+            </div>
           </div>
         </div>
+        {% endif %}
 
-        <div class="row g-2 mb-2 align-items-center">
-          <div class="col-auto">
-            <input class="form-check-input" type="radio" name="correct_opt" value="2">
-            <strong>C)</strong>
+        <div class="row align-items-center g-2">
+          <div class="col-md-8">
+            <input type="file" name="question_image" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" onchange="previewUploadedImage(this, 'qImagePreview')">
           </div>
-          <div class="col">
-            <input type="text" name="opt_text" class="form-control" placeholder="C variant matni...">
-          </div>
-        </div>
-
-        <div class="row g-2 mb-2 align-items-center">
-          <div class="col-auto">
-            <input class="form-check-input" type="radio" name="correct_opt" value="3">
-            <strong>D)</strong>
-          </div>
-          <div class="col">
-            <input type="text" name="opt_text" class="form-control" placeholder="D variant matni...">
-          </div>
+          <div class="col-md-4" id="qImagePreview"></div>
         </div>
       </div>
     </div>
 
-    <div class="mt-4 pt-3 border-top text-end">
-      <button type="submit" class="btn btn-gov-primary px-4 fw-bold">
-        <i class="bi bi-save me-1"></i> Savolni saqlash
-      </button>
+    <!-- Savol matni -->
+    <div class="col-12">
+      <label class="form-label small fw-bold">Savol matni <span class="text-danger">*</span></label>
+      <textarea name="text" class="form-control" rows="3" placeholder="Savol matnini kiriting..." required>{{ question.text if question else '' }}</textarea>
     </div>
-  </form>
-</div>
+
+    <!-- Izoh va Manba -->
+    <div class="col-md-8">
+      <label class="form-label small fw-bold">Tushuntirish / Izoh (To'g'ri javob sababi)</label>
+      <textarea name="explanation" class="form-control" rows="2" placeholder="O'qituvchilar uchun metodik izoh...">{{ question.explanation if question else '' }}</textarea>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-bold">Savol manbasi / Darslik</label>
+      <input type="text" name="source" class="form-control" placeholder="Masalan: 10-sinf Geometriya, 2024" value="{{ question.source if question else '' }}">
+    </div>
+
+    <!-- JAVOB VARIANTLARI VA HAR BIR VARIANTGA RASM YUKLASH -->
+    <div class="col-12 border-top pt-4 mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="fw-bold text-dark mb-0"><i class="bi bi-check2-square text-success me-2"></i> Javob Variantlari va Media</h5>
+          <span class="text-muted small">Har bir variant matn, rasm yoki matn+rasm ko'rinishida bo'lishi mumkin.</span>
+        </div>
+        <div class="badge bg-light text-dark border p-2">
+          <i class="bi bi-info-circle me-1 text-primary"></i> To'g'ri variantni belgilang
+        </div>
+      </div>
+
+      {% set default_keys = ['A', 'B', 'C', 'D'] %}
+      {% set existing_opts = question.options if (question and question.options) else [] %}
+      {% set opt_map = {} %}
+      {% for opt in existing_opts %}
+        {% set _ = opt_map.update({opt.key: opt}) %}
+      {% endfor %}
+
+      <div class="row g-3" id="optionsList">
+        {% for key in default_keys %}
+        {% set opt = opt_map.get(key) %}
+        <div class="col-md-6 option-block">
+          <div class="card border rounded-3 p-3 bg-white h-100 shadow-sm position-relative">
+            <input type="hidden" name="option_key[]" value="{{ key }}">
+
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 fs-6 fw-bold">
+                  {{ key }}
+                </span>
+                <span class="fw-bold text-dark">Variant</span>
+              </div>
+              <div>
+                <label class="form-check-label small fw-bold me-1" for="optCheck_{{ key }}">To'g'ri javob:</label>
+                <input class="form-check-input correct-opt-input" 
+                       type="radio" 
+                       name="correct_option" 
+                       id="optCheck_{{ key }}" 
+                       value="{{ key }}"
+                       {% if (opt and opt.is_correct) or (not question and loop.first) %}checked{% endif %}>
+              </div>
+            </div>
+
+            <!-- Variant matni -->
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-1">Variant matni (agar rasm bo'lsa, ixtiyoriy):</label>
+              <input type="text" 
+                     name="option_text[]" 
+                     class="form-control form-control-sm" 
+                     placeholder="{{ key }} variant matni..." 
+                     value="{{ opt.text if (opt and opt.text) else '' }}">
+            </div>
+
+            <!-- Variant rasmi (Existing image preview and new upload) -->
+            <div class="p-2 border rounded-2 bg-light mt-auto">
+              <label class="form-label small fw-bold d-block mb-1 text-dark">
+                <i class="bi bi-image me-1 text-primary"></i> Variant rasmi:
+              </label>
+
+              {% if opt and opt.first_image_url %}
+              <div class="d-flex align-items-center gap-2 mb-2 p-1 bg-white rounded border">
+                <img src="{{ opt.first_image_url }}" alt="Variant {{ key }}" class="img-thumbnail" style="max-height: 60px; max-width: 90px; object-fit: contain;">
+                <div class="flex-grow-1">
+                  <div class="small fw-semibold text-success"><i class="bi bi-check-circle me-1"></i> Rasm mavjud</div>
+                  <div class="form-check mt-1">
+                    <input class="form-check-input" type="checkbox" name="delete_option_image_{{ key }}" id="delOptImg_{{ key }}" value="1">
+                    <label class="form-check-label small text-danger" for="delOptImg_{{ key }}">
+                      <i class="bi bi-x-circle me-1"></i> O'chirish
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <span class="small text-muted d-block mb-1">Rasmni almashtirish:</span>
+              {% endif %}
+
+              <div class="d-flex align-items-center gap-2">
+                <input type="file" 
+                       name="option_image_{{ key }}" 
+                       class="form-control form-control-sm" 
+                       accept=".jpg,.jpeg,.png,.webp"
+                       onchange="previewUploadedImage(this, 'optPreview_{{ key }}')">
+              </div>
+              <div id="optPreview_{{ key }}" class="mt-2"></div>
+            </div>
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+    <a href="{{ url_for('admin.questions_list') }}" class="btn btn-light">Bekor qilish</a>
+    <button type="submit" class="btn btn-gov-primary px-5 fw-bold">
+      <i class="bi bi-check2-circle me-1"></i> {% if question %}O'zgarishlarni saqlash{% else %}Savolni saqlash{% endif %}
+    </button>
+  </div>
+</form>
+
+<script>
+  // Dinamik Mavzularni yuklash
+  document.getElementById('subjectSelect').addEventListener('change', async function() {
+    const subjId = this.value;
+    const topicSelect = document.getElementById('topicSelect');
+    topicSelect.innerHTML = '<option value="">Yuklanmoqda...</option>';
+    
+    try {
+      const res = await fetch(`/admin/api/subjects/${subjId}/topics`);
+      const topics = await res.json();
+      topicSelect.innerHTML = '';
+      if (topics.length > 0) {
+        topics.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.innerText = t.name;
+          topicSelect.appendChild(opt);
+        });
+      } else {
+        topicSelect.innerHTML = '<option value="">Mavzular mavjud emas</option>';
+      }
+    } catch(e) {
+      console.error(e);
+      topicSelect.innerHTML = '<option value="">Xatolik yuz berdi</option>';
+    }
+  });
+
+  // Savol turiga qarab radio/checkbox formatini o'zgartirish
+  document.getElementById('questionTypeSelect').addEventListener('change', function() {
+    const isMulti = (this.value === 'MULTIPLE_CHOICE');
+    document.querySelectorAll('.correct-opt-input').forEach(input => {
+      input.type = isMulti ? 'checkbox' : 'radio';
+      input.name = isMulti ? 'correct_options_multi[]' : 'correct_option';
+    });
+  });
+
+  // Rasmlarni yuklash paytida jonli preview qilish
+  function previewUploadedImage(input, targetId) {
+    const container = document.getElementById(targetId);
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        container.innerHTML = `
+          <div class="d-flex align-items-center gap-2 p-1 bg-white border rounded">
+            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 55px; max-width: 80px; object-fit: contain;">
+            <span class="small text-muted text-truncate" style="max-width: 150px;">${file.name}</span>
+          </div>
+        `;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+</script>
 {% endblock %}

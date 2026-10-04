@@ -1,7 +1,7 @@
 from app.models.user import User, UserRole
 from app.models.question import (
     Subject, SubjectSection, Topic, Subtopic,
-    Question, QuestionVersion, QuestionOption, QuestionMedia,
+    Question, QuestionVersion, QuestionOption, QuestionOptionMedia, QuestionMedia,
     QuestionType, DifficultyLevel
 )
 from app.models.test import (
@@ -24,7 +24,7 @@ from app.models.system import (
 __all__ = [
     'User', 'UserRole',
     'Subject', 'SubjectSection', 'Topic', 'Subtopic',
-    'Question', 'QuestionVersion', 'QuestionOption', 'QuestionMedia',
+    'Question', 'QuestionVersion', 'QuestionOption', 'QuestionOptionMedia', 'QuestionMedia',
     'QuestionType', 'DifficultyLevel',
     'TestType', 'Test', 'TestQuestion', 'TestBlueprint', 'TestBlueprintRule',
     'TestSession', 'SessionStatus', 'TestAnswer',

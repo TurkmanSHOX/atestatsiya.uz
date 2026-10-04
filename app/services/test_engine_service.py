@@ -215,7 +215,10 @@ class TestEngineService:
                 options.append({
                     'id': opt.id,
                     'key': opt.key,
-                    'text': opt.text
+                    'text': opt.text or '',
+                    'images': [m.to_dict() for m in opt.media],
+                    'image_url': opt.first_image_url,
+                    'has_image': len(opt.media) > 0
                 })
 
             if test.shuffle_options:
@@ -226,6 +229,9 @@ class TestEngineService:
                 'question_id': q.id,
                 'question_type': q.question_type,
                 'text': q.text,
+                'images': [m.to_dict() for m in q.media],
+                'image_url': q.first_image_url,
+                'has_image': len(q.media) > 0,
                 'difficulty': q.difficulty,
                 'subject_name': q.subject.name if q.subject else "",
                 'topic_name': q.topic.name if q.topic else "",

@@ -31,6 +31,10 @@ app/static/uploads/receipts/*
 !app/static/uploads/receipts/.gitkeep
 app/static/uploads/certificates/*
 !app/static/uploads/certificates/.gitkeep
+app/static/uploads/options/*
+!app/static/uploads/options/.gitkeep
+app/static/uploads/questions/*
+!app/static/uploads/questions/.gitkeep
 
 # IDEs and Editors
 .vscode/

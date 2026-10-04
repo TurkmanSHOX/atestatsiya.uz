@@ -178,12 +178,33 @@ class Question(db.Model):
         clean = " ".join(text.strip().lower().split())
         return hashlib.sha256(clean.encode('utf-8')).hexdigest()
 
+    @property
+    def first_image_url(self):
+        images = [m for m in self.media if m.media_type == 'IMAGE']
+        if images:
+            first = images[0]
+            if first.file_url:
+                return first.file_url
+            p = first.file_path.replace('\\', '/')
+            return p if p.startswith(('http', '/')) else f"/{p}"
+        return None
+
     def get_correct_option_ids(self):
         return [opt.id for opt in self.options if opt.is_correct]
 
     def create_version_snapshot(self, created_by_id=None):
-        """Eski holatni question_versions jadvaliga arxivlash"""
-        opts_data = [{'key': opt.key, 'text': opt.text, 'is_correct': opt.is_correct, 'explanation': opt.explanation} for opt in self.options]
+        """Eski holatni question_versions jadvaliga arxivlash (shu jumladan variant rasmlari)"""
+        opts_data = []
+        for opt in self.options:
+            opt_dict = {
+                'key': opt.key,
+                'text': opt.text,
+                'is_correct': opt.is_correct,
+                'explanation': opt.explanation,
+                'images': [m.to_dict() for m in opt.media]
+            }
+            opts_data.append(opt_dict)
+
         v = QuestionVersion(
             question_id=self.id,
             version_number=self.version,
@@ -216,6 +237,8 @@ class Question(db.Model):
             'status': self.status,
             'is_approved': self.is_approved,
             'version': self.version,
+            'images': [m.to_dict() for m in self.media],
+            'image_url': self.first_image_url,
             'options': [opt.to_dict(include_correct=include_correct) for opt in self.options]
         }
 
@@ -240,30 +263,95 @@ class QuestionOption(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False, index=True)
     key = db.Column(db.String(10), nullable=False) # A, B, C, D
-    text = db.Column(db.Text, nullable=False)
+    text = db.Column(db.Text, nullable=True) # Rasm mavjud bo'lsa matn bo'sh bo'lishi mumkin
     is_correct = db.Column(db.Boolean, default=False)
+    order_num = db.Column(db.Integer, default=0)
     explanation = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     question = db.relationship('Question', back_populates='options')
+    media = db.relationship('QuestionOptionMedia', back_populates='option', cascade='all, delete-orphan')
+
+    @property
+    def first_image_url(self):
+        if self.media:
+            first = self.media[0]
+            if first.file_url:
+                return first.file_url
+            p = first.file_path.replace('\\', '/')
+            return p if p.startswith(('http', '/')) else f"/{p}"
+        return None
 
     def to_dict(self, include_correct=False):
         d = {
             'id': self.id,
             'key': self.key,
-            'text': self.text,
-            'explanation': self.explanation
+            'text': self.text or '',
+            'explanation': self.explanation,
+            'images': [m.to_dict() for m in self.media],
+            'image_url': self.first_image_url,
+            'has_image': len(self.media) > 0
         }
         if include_correct:
             d['is_correct'] = self.is_correct
         return d
+
+class QuestionOptionMedia(db.Model):
+    __tablename__ = 'question_option_media'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    option_id = db.Column(db.Integer, db.ForeignKey('question_options.id', ondelete='CASCADE'), nullable=False, index=True)
+    file_path = db.Column(db.String(255), nullable=False)
+    file_url = db.Column(db.String(255), nullable=True)
+    original_name = db.Column(db.String(255), nullable=True)
+    mime_type = db.Column(db.String(100), nullable=True)
+    file_size = db.Column(db.Integer, nullable=True) # Baytlarda
+    media_type = db.Column(db.String(20), default='IMAGE') # IMAGE, etc.
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    option = db.relationship('QuestionOption', back_populates='media')
+
+    def to_dict(self):
+        p = self.file_path.replace('\\', '/')
+        url = self.file_url or (p if p.startswith(('http', '/')) else f"/{p}")
+        return {
+            'id': self.id,
+            'option_id': self.option_id,
+            'file_path': self.file_path,
+            'file_url': url,
+            'original_name': self.original_name,
+            'mime_type': self.mime_type,
+            'file_size': self.file_size,
+            'media_type': self.media_type,
+            'sort_order': self.sort_order
+        }
 
 class QuestionMedia(db.Model):
     __tablename__ = 'question_media'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False, index=True)
-    media_type = db.Column(db.String(20), nullable=False) # IMAGE, AUDIO, VIDEO
+    media_type = db.Column(db.String(20), nullable=False, default='IMAGE') # IMAGE, AUDIO, VIDEO
     file_path = db.Column(db.String(255), nullable=False)
+    file_url = db.Column(db.String(255), nullable=True)
+    original_name = db.Column(db.String(255), nullable=True)
+    mime_type = db.Column(db.String(100), nullable=True)
+    file_size = db.Column(db.Integer, nullable=True)
     caption = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     question = db.relationship('Question', back_populates='media')
+
+    def to_dict(self):
+        p = self.file_path.replace('\\', '/')
+        url = self.file_url or (p if p.startswith(('http', '/')) else f"/{p}")
+        return {
+            'id': self.id,
+            'question_id': self.question_id,
+            'media_type': self.media_type,
+            'file_path': self.file_path,
+            'file_url': url,
+            'caption': self.caption
+        }

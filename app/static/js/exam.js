@@ -77,6 +77,28 @@ class ExamEngine {
     document.getElementById('questionTopicName').innerText = q.topic_name || q.subject_name || "Mavzu";
     document.getElementById('questionText').innerText = q.text;
 
+    // Savol rasmi (Question Media)
+    const mediaContainer = document.getElementById('questionMedia');
+    if (mediaContainer) {
+      mediaContainer.innerHTML = '';
+      const qImages = (q.images && q.images.length > 0) ? q.images : (q.image_url ? [{ file_url: q.image_url }] : []);
+      if (qImages.length > 0) {
+        qImages.forEach(img => {
+          const imgUrl = img.file_url || (img.file_path ? (img.file_path.startsWith('/') ? img.file_path : '/' + img.file_path.replace(/\\/g, '/')) : '');
+          if (!imgUrl) return;
+          const wrap = document.createElement('div');
+          wrap.className = 'd-inline-block position-relative m-1';
+          wrap.innerHTML = `
+            <img src="${imgUrl}" alt="Savol rasmi" class="img-fluid rounded-3 border shadow-sm" style="max-height: 280px; object-fit: contain; cursor: zoom-in;" onclick="window.openImageZoom('${imgUrl}', 'Savol rasmi')" />
+            <button type="button" class="btn btn-sm btn-dark bg-opacity-75 border-0 position-absolute bottom-0 end-0 m-2 rounded-circle text-white" title="Kattalashtirish" onclick="window.openImageZoom('${imgUrl}', 'Savol rasmi')">
+              <i class="bi bi-arrows-fullscreen"></i>
+            </button>
+          `;
+          mediaContainer.appendChild(wrap);
+        });
+      }
+    }
+
     // Flag holati
     const flagBtn = document.getElementById('flagQuestionBtn');
     if (flagBtn) {
@@ -94,36 +116,84 @@ class ExamEngine {
     container.innerHTML = '';
 
     const isMulti = q.question_type === 'MULTIPLE_CHOICE';
+    const anyOptionHasImage = q.options.some(opt => opt.has_image || (opt.images && opt.images.length > 0) || opt.image_url);
+
+    if (anyOptionHasImage) {
+      container.className = 'row g-3 mb-5 flex-grow-1';
+    } else {
+      container.className = 'mb-5 flex-grow-1';
+    }
 
     q.options.forEach((opt) => {
       const isChecked = q.selected_option_ids && q.selected_option_ids.includes(opt.id);
+      const optImages = (opt.images && opt.images.length > 0) ? opt.images : (opt.image_url ? [{ file_url: opt.image_url }] : []);
+      const hasImage = optImages.length > 0;
 
-      const label = document.createElement('label');
-      label.className = `exam-option-card d-flex align-items-center p-3 mb-2 rounded-3 border ${isChecked ? 'selected bg-success-subtle border-success' : 'bg-white'}`;
-      label.style.cursor = 'pointer';
+      const card = document.createElement('label');
+      card.className = `exam-option-card d-flex align-items-start p-3 rounded-3 border transition-all h-100 ${isChecked ? 'selected bg-success-subtle border-success shadow-sm' : 'bg-white border-secondary-subtle'}`;
+      card.style.cursor = 'pointer';
 
       const input = document.createElement('input');
       input.type = isMulti ? 'checkbox' : 'radio';
       input.name = `question_option_${q.question_id}`;
       input.value = opt.id;
       input.checked = isChecked;
-      input.className = 'form-check-input me-3 my-0 flex-shrink-0';
+      input.className = 'form-check-input me-3 mt-1 flex-shrink-0';
       if (!isMulti) input.style.accentColor = '#16a34a';
 
       input.onchange = () => this.handleOptionSelect(opt.id, isMulti);
 
+      const contentBox = document.createElement('div');
+      contentBox.className = 'flex-grow-1';
+
+      // Key + text
+      const headerBox = document.createElement('div');
+      headerBox.className = 'd-flex align-items-baseline flex-wrap';
+
       const spanKey = document.createElement('span');
-      spanKey.className = 'fw-bold me-2 text-success';
+      spanKey.className = 'fw-bold me-2 text-success fs-6';
       spanKey.innerText = `${opt.key})`;
+      headerBox.appendChild(spanKey);
 
-      const spanText = document.createElement('span');
-      spanText.className = 'text-dark';
-      spanText.innerText = opt.text;
+      if (opt.text && opt.text.trim()) {
+        const spanText = document.createElement('span');
+        spanText.className = 'text-dark fw-medium lh-base';
+        spanText.innerText = opt.text;
+        headerBox.appendChild(spanText);
+      }
+      contentBox.appendChild(headerBox);
 
-      label.appendChild(input);
-      label.appendChild(spanKey);
-      label.appendChild(spanText);
-      container.appendChild(label);
+      // Rasm bo'lsa
+      if (hasImage) {
+        optImages.forEach(img => {
+          const imgUrl = img.file_url || (img.file_path ? (img.file_path.startsWith('/') ? img.file_path : '/' + img.file_path.replace(/\\/g, '/')) : '');
+          if (!imgUrl) return;
+
+          const imgBox = document.createElement('div');
+          imgBox.className = 'position-relative mt-2 p-1 bg-light border rounded text-center';
+          imgBox.style.maxWidth = '260px';
+          imgBox.innerHTML = `
+            <img src="${imgUrl}" alt="Variant ${opt.key} rasmi" class="img-fluid rounded" style="max-height: 160px; object-fit: contain;" />
+            <button type="button" class="btn btn-sm btn-light border position-absolute top-0 end-0 m-1 shadow-sm opacity-75 hover-opacity-100" title="Kattalashtirish" onclick="event.preventDefault(); event.stopPropagation(); window.openImageZoom('${imgUrl}', 'Variant ${opt.key} rasmi');">
+              <i class="bi bi-arrows-fullscreen"></i>
+            </button>
+          `;
+          contentBox.appendChild(imgBox);
+        });
+      }
+
+      card.appendChild(input);
+      card.appendChild(contentBox);
+
+      if (anyOptionHasImage) {
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-12';
+        col.appendChild(card);
+        container.appendChild(col);
+      } else {
+        card.classList.add('mb-2');
+        container.appendChild(card);
+      }
     });
 
     // Navigatsiya tugmalari holati
@@ -329,6 +399,17 @@ class ExamEngine {
     }
   }
 }
+
+window.openImageZoom = function(src, title = "Tasvirni ko'rish") {
+  const modalEl = document.getElementById('imageZoomModal');
+  if (!modalEl) return;
+  const imgEl = document.getElementById('imageZoomSrc');
+  const titleEl = document.getElementById('imageZoomTitle');
+  if (imgEl) imgEl.src = src;
+  if (titleEl) titleEl.innerText = title;
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.show();
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.EXAM_CONFIG && window.EXAM_CONFIG.sessionId) {

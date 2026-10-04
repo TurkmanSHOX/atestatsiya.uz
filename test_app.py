@@ -301,5 +301,140 @@ class AttestatsiyaTestCase(unittest.TestCase):
         self.assertEqual(re_import['imported'], 0)
         self.assertEqual(re_import['skipped'], len(ai_res['questions']))
 
+    def test_09_question_option_images_and_exam_engine(self):
+        """Javob variantlariga rasm biriktirish, rasm-faqat variantlar, sessiya payload va xavfsizlik nazorati"""
+        import io
+        from PIL import Image
+        from app.models.question import QuestionOptionMedia, QuestionMedia
+        from app.services.media_service import MediaService
+
+        # 1. MediaService Pillow orqali test rasm yaratish va validatsiya qilish
+        img_byte_arr = io.BytesIO()
+        test_img = Image.new('RGB', (100, 100), color='blue')
+        test_img.save(img_byte_arr, format='PNG')
+        img_byte_arr.seek(0)
+
+        from werkzeug.datastructures import FileStorage
+        fs = FileStorage(stream=img_byte_arr, filename='test_shape.png', content_type='image/png')
+        media_data = MediaService.save_image(fs, subfolder='options')
+        self.assertIsNotNone(media_data)
+        saved_path = media_data['file_url']
+        self.assertTrue(saved_path.startswith('/static/uploads/options/'))
+
+        # 2. Yangi savol yaratish (Savol rasmi + Variant rasmlari bilan)
+        subj = Subject.query.first()
+        topic = Topic.query.first()
+        uid = int(datetime.utcnow().timestamp() * 1000)
+
+        q = Question(
+            subject_id=subj.id,
+            topic_id=topic.id,
+            question_type=QuestionType.SINGLE_CHOICE,
+            text=f"Rasmga asoslangan geometrik savol {uid}?",
+            difficulty=DifficultyLevel.EASY,
+            hash=Question.calculate_hash(f"Rasmga asoslangan geometrik savol {uid}?"),
+            status='ACTIVE',
+            is_approved=True
+        )
+        db.session.add(q)
+        db.session.flush()
+
+        # Savolga rasm biriktirish
+        q_media = QuestionMedia(
+            question_id=q.id,
+            file_path=saved_path,
+            file_url=saved_path,
+            original_name='geometry_q.png',
+            mime_type='image/png',
+            media_type='IMAGE'
+        )
+        db.session.add(q_media)
+
+        # Variantlar:
+        # A: matn + rasm (to'g'ri)
+        # B: faqat rasm (matn bo'sh)
+        # C: faqat matn
+        # D: matn + rasm
+        opt_a = QuestionOption(question_id=q.id, key='A', text="Uchburchak", is_correct=True)
+        opt_b = QuestionOption(question_id=q.id, key='B', text="", is_correct=False) # Matnsiz, faqat rasm
+        opt_c = QuestionOption(question_id=q.id, key='C', text="Doira (rasmsiz)", is_correct=False)
+        opt_d = QuestionOption(question_id=q.id, key='D', text="Trapetsiya", is_correct=False)
+        db.session.add_all([opt_a, opt_b, opt_c, opt_d])
+        db.session.flush()
+
+        # Variantlarga QuestionOptionMedia biriktirish
+        opt_a_media = QuestionOptionMedia(
+            option_id=opt_a.id,
+            file_path=saved_path,
+            file_url=saved_path,
+            original_name='opt_a.png',
+            mime_type='image/png',
+            media_type='IMAGE'
+        )
+        opt_b_media = QuestionOptionMedia(
+            option_id=opt_b.id,
+            file_path=saved_path,
+            file_url=saved_path,
+            original_name='opt_b.png',
+            mime_type='image/png',
+            media_type='IMAGE'
+        )
+        db.session.add_all([opt_a_media, opt_b_media])
+        db.session.commit()
+
+        # 3. Model metodlarini tekshirish
+        self.assertEqual(q.first_image_url, saved_path)
+        self.assertEqual(opt_a.first_image_url, saved_path)
+        self.assertEqual(opt_b.first_image_url, saved_path)
+        self.assertIsNone(opt_c.first_image_url)
+
+        opt_b_dict = opt_b.to_dict(include_correct=True)
+        self.assertEqual(opt_b_dict['text'], '')
+        self.assertTrue(opt_b_dict['has_image'])
+        self.assertEqual(len(opt_b_dict['images']), 1)
+
+        # 4. Test sessiyasini yaratish va get_session_payload orqali test engine tekshiruvi
+        teacher = User.query.filter_by(email='user@example.com').first()
+        test_single = Test(
+            title=f"Media Test {uid}",
+            test_type=TestType.FAN,
+            subject_id=subj.id,
+            duration_minutes=20,
+            passing_score=60.0,
+            total_questions=1,
+            shuffle_options=True,
+            status='ACTIVE'
+        )
+        db.session.add(test_single)
+        db.session.commit()
+
+        session = TestEngineService.start_session(
+            user_id=teacher.id,
+            test_id=test_single.id,
+            ip_address='127.0.0.1',
+            user_agent='TestRunner/2.0'
+        )
+        from app.models.session import TestAnswer
+        TestAnswer.query.filter_by(session_id=session.id).delete()
+        ans = TestAnswer(session_id=session.id, question_id=q.id)
+        db.session.add(ans)
+        db.session.commit()
+
+        payload = TestEngineService.get_session_payload(session.id)
+        self.assertIsNotNone(payload)
+        q_payload = payload['questions'][0]
+        self.assertEqual(q_payload['question_id'], q.id)
+        self.assertEqual(q_payload['image_url'], saved_path)
+        self.assertTrue(q_payload['has_image'])
+        self.assertEqual(len(q_payload['images']), 1)
+
+        # Variantlar yaxlitligi (id, text, image, key) tekshiruvi
+        opts_payload = q_payload['options']
+        self.assertEqual(len(opts_payload), 4)
+        opt_b_in_payload = next(o for o in opts_payload if o['id'] == opt_b.id)
+        self.assertEqual(opt_b_in_payload['text'], '')
+        self.assertEqual(opt_b_in_payload['image_url'], saved_path)
+        self.assertTrue(opt_b_in_payload['has_image'])
+
 if __name__ == '__main__':
     unittest.main()

@@ -27,10 +27,15 @@ class QuestionImportService:
         # Kerakli ustunlar xaritasi
         col_map = {
             'text': next((c for c in df.columns if any(k in c for k in ['savol', 'question', 'text'])), None),
-            'opt_a': next((c for c in df.columns if any(k in c for k in ['a', 'variant a', 'opt_a'])), None),
-            'opt_b': next((c for c in df.columns if any(k in c for k in ['b', 'variant b', 'opt_b'])), None),
-            'opt_c': next((c for c in df.columns if any(k in c for k in ['c', 'variant c', 'opt_c'])), None),
-            'opt_d': next((c for c in df.columns if any(k in c for k in ['d', 'variant d', 'opt_d'])), None),
+            'q_image': next((c for c in df.columns if any(k in c for k in ['savol_rasm', 'savol rasmi', 'question_image', 'q_image', 'rasm'])), None),
+            'opt_a': next((c for c in df.columns if any(k in c for k in ['variant a', 'opt_a']) or c == 'a'), None),
+            'opt_a_img': next((c for c in df.columns if any(k in c for k in ['a_rasm', 'a rasm', 'opt_a_image', 'variant_a_rasm'])), None),
+            'opt_b': next((c for c in df.columns if any(k in c for k in ['variant b', 'opt_b']) or c == 'b'), None),
+            'opt_b_img': next((c for c in df.columns if any(k in c for k in ['b_rasm', 'b rasm', 'opt_b_image', 'variant_b_rasm'])), None),
+            'opt_c': next((c for c in df.columns if any(k in c for k in ['variant c', 'opt_c']) or c == 'c'), None),
+            'opt_c_img': next((c for c in df.columns if any(k in c for k in ['c_rasm', 'c rasm', 'opt_c_image', 'variant_c_rasm'])), None),
+            'opt_d': next((c for c in df.columns if any(k in c for k in ['variant d', 'opt_d']) or c == 'd'), None),
+            'opt_d_img': next((c for c in df.columns if any(k in c for k in ['d_rasm', 'd rasm', 'opt_d_image', 'variant_d_rasm'])), None),
             'correct': next((c for c in df.columns if any(k in c for k in ["to'g'ri", 'togri', 'correct', 'javob'])), None),
             'subject': next((c for c in df.columns if any(k in c for k in ['fan', 'subject'])), None),
             'section': next((c for c in df.columns if any(k in c for k in ["bo'lim", 'bolim', 'section'])), None),
@@ -51,20 +56,38 @@ class QuestionImportService:
                 errors.append(f"{row_num}-qator: Savol matni bo'sh.")
                 continue
 
+            # Savol rasmi
+            q_img = str(row.get(col_map['q_image'], '')).strip() if col_map.get('q_image') else ''
+            if q_img.lower() == 'nan':
+                q_img = ''
+
             # Variantlar
-            opt_a = str(row.get(col_map['opt_a'], '')).strip() if col_map['opt_a'] else ''
-            opt_b = str(row.get(col_map['opt_b'], '')).strip() if col_map['opt_b'] else ''
-            opt_c = str(row.get(col_map['opt_c'], '')).strip() if col_map['opt_c'] else ''
-            opt_d = str(row.get(col_map['opt_d'], '')).strip() if col_map['opt_d'] else ''
+            opt_a = str(row.get(col_map['opt_a'], '')).strip() if col_map.get('opt_a') else ''
+            opt_b = str(row.get(col_map['opt_b'], '')).strip() if col_map.get('opt_b') else ''
+            opt_c = str(row.get(col_map['opt_c'], '')).strip() if col_map.get('opt_c') else ''
+            opt_d = str(row.get(col_map['opt_d'], '')).strip() if col_map.get('opt_d') else ''
 
-            if not opt_a or opt_a.lower() == 'nan':
-                errors.append(f"{row_num}-qator: A varianti mavjud emas.")
+            opt_a_img = str(row.get(col_map['opt_a_img'], '')).strip() if col_map.get('opt_a_img') else ''
+            if opt_a_img.lower() == 'nan': opt_a_img = ''
+            opt_b_img = str(row.get(col_map['opt_b_img'], '')).strip() if col_map.get('opt_b_img') else ''
+            if opt_b_img.lower() == 'nan': opt_b_img = ''
+            opt_c_img = str(row.get(col_map['opt_c_img'], '')).strip() if col_map.get('opt_c_img') else ''
+            if opt_c_img.lower() == 'nan': opt_c_img = ''
+            opt_d_img = str(row.get(col_map['opt_d_img'], '')).strip() if col_map.get('opt_d_img') else ''
+            if opt_d_img.lower() == 'nan': opt_d_img = ''
+
+            # Har bir variantda matn yoki rasm bo'lishi kerak
+            has_a = (opt_a and opt_a.lower() != 'nan') or bool(opt_a_img)
+            has_b = (opt_b and opt_b.lower() != 'nan') or bool(opt_b_img)
+
+            if not has_a:
+                errors.append(f"{row_num}-qator: A varianti matni yoki rasmi mavjud emas.")
                 continue
-            if not opt_b or opt_b.lower() == 'nan':
-                errors.append(f"{row_num}-qator: B varianti mavjud emas.")
+            if not has_b:
+                errors.append(f"{row_num}-qator: B varianti matni yoki rasmi mavjud emas.")
                 continue
 
-            raw_correct = str(row.get(col_map['correct'], '')).strip().upper() if col_map['correct'] else ''
+            raw_correct = str(row.get(col_map['correct'], '')).strip().upper() if col_map.get('correct') else ''
             correct_key = raw_correct[0] if raw_correct and raw_correct[0] in ['A', 'B', 'C', 'D'] else None
 
             if not correct_key:
@@ -78,11 +101,11 @@ class QuestionImportService:
             if is_dup:
                 duplicates_count += 1
 
-            subject_name = str(row.get(col_map['subject'], 'Umumiy')).strip() if col_map['subject'] else 'Umumiy'
-            section_name = str(row.get(col_map['section'], '')).strip() if col_map['section'] else ''
-            topic_name = str(row.get(col_map['topic'], 'Asosiy mavzu')).strip() if col_map['topic'] else 'Asosiy mavzu'
+            subject_name = str(row.get(col_map['subject'], 'Umumiy')).strip() if col_map.get('subject') else 'Umumiy'
+            section_name = str(row.get(col_map['section'], '')).strip() if col_map.get('section') else ''
+            topic_name = str(row.get(col_map['topic'], 'Asosiy mavzu')).strip() if col_map.get('topic') else 'Asosiy mavzu'
             
-            raw_diff = str(row.get(col_map['difficulty'], 'MEDIUM')).strip().upper()
+            raw_diff = str(row.get(col_map['difficulty'], 'MEDIUM')).strip().upper() if col_map.get('difficulty') else 'MEDIUM'
             if 'OSON' in raw_diff or 'EASY' in raw_diff:
                 diff = DifficultyLevel.EASY
             elif 'QIYIN' in raw_diff or 'HARD' in raw_diff:
@@ -90,25 +113,31 @@ class QuestionImportService:
             else:
                 diff = DifficultyLevel.MEDIUM
 
-            explanation = str(row.get(col_map['explanation'], '')).strip() if col_map['explanation'] else ''
+            explanation = str(row.get(col_map['explanation'], '')).strip() if col_map.get('explanation') else ''
             if explanation.lower() == 'nan':
                 explanation = ''
-            source = str(row.get(col_map['source'], '')).strip() if col_map['source'] else ''
+            source = str(row.get(col_map['source'], '')).strip() if col_map.get('source') else ''
             if source.lower() == 'nan':
                 source = ''
 
+            clean_a = '' if opt_a.lower() == 'nan' else opt_a
+            clean_b = '' if opt_b.lower() == 'nan' else opt_b
+            clean_c = '' if opt_c.lower() == 'nan' else opt_c
+            clean_d = '' if opt_d.lower() == 'nan' else opt_d
+
             options = [
-                {'key': 'A', 'text': opt_a, 'is_correct': (correct_key == 'A')},
-                {'key': 'B', 'text': opt_b, 'is_correct': (correct_key == 'B')}
+                {'key': 'A', 'text': clean_a, 'image_url': opt_a_img, 'is_correct': (correct_key == 'A')},
+                {'key': 'B', 'text': clean_b, 'image_url': opt_b_img, 'is_correct': (correct_key == 'B')}
             ]
-            if opt_c and opt_c.lower() != 'nan':
-                options.append({'key': 'C', 'text': opt_c, 'is_correct': (correct_key == 'C')})
-            if opt_d and opt_d.lower() != 'nan':
-                options.append({'key': 'D', 'text': opt_d, 'is_correct': (correct_key == 'D')})
+            if clean_c or opt_c_img:
+                options.append({'key': 'C', 'text': clean_c, 'image_url': opt_c_img, 'is_correct': (correct_key == 'C')})
+            if clean_d or opt_d_img:
+                options.append({'key': 'D', 'text': clean_d, 'image_url': opt_d_img, 'is_correct': (correct_key == 'D')})
 
             parsed_questions.append({
                 'row_num': row_num,
                 'text': q_text,
+                'image_url': q_img,
                 'subject': subject_name,
                 'section': section_name,
                 'topic': topic_name,
@@ -161,8 +190,11 @@ class QuestionImportService:
 
         for para in paragraphs:
             line_idx += 1
-            q_match = q_pattern.match(para)
-            opt_match = opt_pattern.match(para)
+            q_img_match = re.search(r'\[(?:rasm|image|img)\s*:\s*([^\]]+)\]', para, re.IGNORECASE)
+            para_clean = re.sub(r'\[(?:rasm|image|img)\s*:\s*([^\]]+)\]', '', para, flags=re.IGNORECASE).strip()
+
+            q_match = q_pattern.match(para_clean)
+            opt_match = opt_pattern.match(para_clean)
 
             if q_match:
                 if current_q:
@@ -184,6 +216,7 @@ class QuestionImportService:
                 current_q = {
                     'num_str': q_num,
                     'text': q_text,
+                    'image_url': q_img_match.group(1).strip() if q_img_match else '',
                     'subject': 'Umumiy',
                     'topic': 'Asosiy mavzu',
                     'difficulty': DifficultyLevel.MEDIUM,
@@ -198,14 +231,18 @@ class QuestionImportService:
                 opt_text = opt_match.group(3).strip()
                 # Agar matn ichida ham * bo'lsa tozalash
                 opt_text = opt_text.replace('*', '').strip()
+                opt_img = q_img_match.group(1).strip() if q_img_match else ''
 
                 current_options.append({
                     'key': key,
                     'text': opt_text,
+                    'image_url': opt_img,
                     'is_correct': is_correct
                 })
             elif current_q and not opt_match:
-                current_q['text'] += " " + para
+                if q_img_match and not current_q.get('image_url'):
+                    current_q['image_url'] = q_img_match.group(1).strip()
+                current_q['text'] += " " + para_clean
 
         # Oxirgi savolni saqlash
         if current_q:
@@ -242,6 +279,8 @@ class QuestionImportService:
         """
         Admin tasdiqlagan savollarni bazaga saqlash.
         """
+        from app.models.question import QuestionMedia, QuestionOptionMedia
+
         imported_count = 0
         skipped_count = 0
 
@@ -301,14 +340,36 @@ class QuestionImportService:
             db.session.add(q)
             db.session.flush()
 
+            # Savol rasmi
+            q_img = item.get('image_url')
+            if q_img:
+                db.session.add(QuestionMedia(
+                    question_id=q.id,
+                    file_path=str(q_img),
+                    file_url=str(q_img),
+                    original_name='imported_question_image.png',
+                    media_type='IMAGE'
+                ))
+
             for opt in item.get('options', []):
                 option = QuestionOption(
                     question_id=q.id,
                     key=opt.get('key', 'A'),
-                    text=opt.get('text', ''),
+                    text=opt.get('text', '') or '',
                     is_correct=opt.get('is_correct', False)
                 )
                 db.session.add(option)
+                db.session.flush()
+
+                opt_img = opt.get('image_url')
+                if opt_img:
+                    db.session.add(QuestionOptionMedia(
+                        option_id=option.id,
+                        file_path=str(opt_img),
+                        file_url=str(opt_img),
+                        original_name=f"imported_opt_{opt.get('key')}.png",
+                        media_type='IMAGE'
+                    ))
 
             imported_count += 1
 

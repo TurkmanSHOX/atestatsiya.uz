@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models.user import User, UserRole
-from app.models.question import Subject, SubjectSection, Topic, Subtopic, Question, QuestionOption, QuestionType, DifficultyLevel
+from app.models.question import Subject, SubjectSection, Topic, Subtopic, Question, QuestionOption, QuestionOptionMedia, QuestionMedia, QuestionType, DifficultyLevel
 from app.models.test import Test, TestType, TestBlueprint, TestBlueprintRule
 from app.models.session import TestSession, SessionStatus
 from app.models.result import Result
@@ -19,6 +19,7 @@ from app.services.import_service import QuestionImportService
 from app.services.ai_service import AIService
 from app.services.telegram_service import TelegramService
 from app.services.test_engine_service import TestEngineService
+from app.services.media_service import MediaService
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -256,6 +257,12 @@ def questions_list():
         q=q
     )
 
+@admin_bp.route('/api/subjects/<int:subject_id>/topics')
+@admin_required
+def api_subject_topics(subject_id):
+    topics = Topic.query.filter_by(subject_id=subject_id, is_active=True).order_by(Topic.order_num).all()
+    return jsonify([{'id': t.id, 'name': t.name} for t in topics])
+
 @admin_bp.route('/questions/create', methods=['GET', 'POST'])
 @admin_required
 def question_create():
@@ -267,6 +274,7 @@ def question_create():
         explanation = request.form.get('explanation', '').strip()
         difficulty = request.form.get('difficulty', DifficultyLevel.MEDIUM)
         source = request.form.get('source', '').strip()
+        points = float(request.form.get('points', 1.0))
 
         q_hash = Question.calculate_hash(text)
         existing = Question.query.filter_by(hash=q_hash).first()
@@ -280,6 +288,7 @@ def question_create():
             text=text,
             explanation=explanation,
             difficulty=difficulty,
+            points=points,
             source=source,
             status='ACTIVE',
             is_approved=True,
@@ -289,30 +298,84 @@ def question_create():
         db.session.add(question)
         db.session.flush()
 
+        # Savolning asosiy rasmi
+        q_image_file = request.files.get('question_image')
+        if q_image_file and q_image_file.filename:
+            try:
+                saved = MediaService.save_image(q_image_file, subfolder='questions')
+                if saved:
+                    q_media = QuestionMedia(
+                        question_id=question.id,
+                        media_type='IMAGE',
+                        file_path=saved['file_path'],
+                        file_url=saved['file_url'],
+                        original_name=saved['original_name'],
+                        mime_type=saved['mime_type'],
+                        file_size=saved['file_size']
+                    )
+                    db.session.add(q_media)
+            except Exception as e:
+                flash(f"Savol rasmini yuklashda xatolik: {e}", "warning")
+
         # Variantlar
         option_texts = request.form.getlist('option_text[]')
         option_keys = request.form.getlist('option_key[]')
         correct_key = request.form.get('correct_option')
         correct_keys_multi = request.form.getlist('correct_options_multi[]')
 
-        for key, opt_text in zip(option_keys, option_texts):
-            if opt_text.strip():
+        for idx, key in enumerate(option_keys):
+            opt_text = option_texts[idx].strip() if idx < len(option_texts) else ''
+            opt_image_file = request.files.get(f'option_image_{key}') or request.files.get(f'option_image_{idx}')
+
+            has_text = bool(opt_text)
+            has_image = bool(opt_image_file and opt_image_file.filename)
+
+            if has_text or has_image:
                 is_corr = (key == correct_key) if q_type == QuestionType.SINGLE_CHOICE else (key in correct_keys_multi)
                 opt = QuestionOption(
                     question_id=question.id,
                     key=key,
-                    text=opt_text.strip(),
-                    is_correct=is_corr
+                    text=opt_text if has_text else None,
+                    is_correct=is_corr,
+                    order_num=idx + 1
                 )
                 db.session.add(opt)
+                db.session.flush()
+
+                if has_image:
+                    try:
+                        saved_opt_media = MediaService.save_image(opt_image_file, subfolder='options')
+                        if saved_opt_media:
+                            opt_media = QuestionOptionMedia(
+                                option_id=opt.id,
+                                file_path=saved_opt_media['file_path'],
+                                file_url=saved_opt_media['file_url'],
+                                original_name=saved_opt_media['original_name'],
+                                mime_type=saved_opt_media['mime_type'],
+                                file_size=saved_opt_media['file_size'],
+                                media_type='IMAGE',
+                                sort_order=1
+                            )
+                            db.session.add(opt_media)
+                            AuditService.log_action(
+                                user_id=current_user.id,
+                                action='OPTION_IMAGE_ADDED',
+                                entity='QUESTION',
+                                entity_id=question.id,
+                                new_values={'option': key, 'file': saved_opt_media['original_name']}
+                            )
+                    except Exception as e:
+                        flash(f"Variant {key} rasmini saqlashda xatolik: {e}", "warning")
 
         db.session.commit()
         AuditService.log_action(user_id=current_user.id, action='CREATE', entity='QUESTION', entity_id=question.id)
-        flash("Savol muvaffaqiyatli saqlandi.", "success")
+        flash("Savol va javob variantlari muvaffaqiyatli saqlandi.", "success")
         return redirect(url_for('admin.questions_list'))
 
     subjects = Subject.query.filter_by(is_active=True).all()
-    return render_template('admin/question_form.html', question=None, subjects=subjects)
+    first_subj = subjects[0] if subjects else None
+    topics = Topic.query.filter_by(subject_id=first_subj.id, is_active=True).all() if first_subj else []
+    return render_template('admin/question_form.html', question=None, subjects=subjects, topics=topics)
 
 @admin_bp.route('/questions/<int:id>/edit', methods=['GET', 'POST'])
 @admin_required
@@ -328,35 +391,130 @@ def question_edit(id):
         question.text = request.form.get('text', '').strip()
         question.explanation = request.form.get('explanation', '').strip()
         question.difficulty = request.form.get('difficulty')
+        question.points = float(request.form.get('points', question.points or 1.0))
         question.source = request.form.get('source', '').strip()
         question.hash = Question.calculate_hash(question.text)
 
+        # Savolning asosiy rasmini boshqarish
+        if request.form.get('delete_question_image'):
+            for qm in list(question.media):
+                MediaService.delete_file(qm.file_path)
+                db.session.delete(qm)
+            AuditService.log_action(user_id=current_user.id, action='QUESTION_IMAGE_DELETED', entity='QUESTION', entity_id=question.id)
+
+        q_image_file = request.files.get('question_image')
+        if q_image_file and q_image_file.filename:
+            for qm in list(question.media):
+                MediaService.delete_file(qm.file_path)
+                db.session.delete(qm)
+            try:
+                saved = MediaService.save_image(q_image_file, subfolder='questions')
+                if saved:
+                    q_media = QuestionMedia(
+                        question_id=question.id,
+                        media_type='IMAGE',
+                        file_path=saved['file_path'],
+                        file_url=saved['file_url'],
+                        original_name=saved['original_name'],
+                        mime_type=saved['mime_type'],
+                        file_size=saved['file_size']
+                    )
+                    db.session.add(q_media)
+                    AuditService.log_action(user_id=current_user.id, action='QUESTION_IMAGE_UPDATED', entity='QUESTION', entity_id=question.id)
+            except Exception as e:
+                flash(f"Savol rasmini almashtirishda xatolik: {e}", "warning")
+
         # Variantlarni yangilash
-        QuestionOption.query.filter_by(question_id=question.id).delete()
+        existing_options_by_key = {opt.key: opt for opt in question.options}
 
         option_texts = request.form.getlist('option_text[]')
         option_keys = request.form.getlist('option_key[]')
         correct_key = request.form.get('correct_option')
         correct_keys_multi = request.form.getlist('correct_options_multi[]')
 
-        for key, opt_text in zip(option_keys, option_texts):
-            if opt_text.strip():
-                is_corr = (key == correct_key) if question.question_type == QuestionType.SINGLE_CHOICE else (key in correct_keys_multi)
+        submitted_keys = set(option_keys)
+        for old_key, old_opt in list(existing_options_by_key.items()):
+            if old_key not in submitted_keys:
+                for om in old_opt.media:
+                    MediaService.delete_file(om.file_path)
+                db.session.delete(old_opt)
+
+        for idx, key in enumerate(option_keys):
+            opt_text = option_texts[idx].strip() if idx < len(option_texts) else ''
+            new_opt_image = request.files.get(f'option_image_{key}') or request.files.get(f'option_image_{idx}')
+            delete_img = bool(request.form.get(f'delete_option_image_{key}'))
+
+            is_corr = (key == correct_key) if question.question_type == QuestionType.SINGLE_CHOICE else (key in correct_keys_multi)
+
+            opt = existing_options_by_key.get(key)
+            if not opt:
                 opt = QuestionOption(
                     question_id=question.id,
                     key=key,
-                    text=opt_text.strip(),
-                    is_correct=is_corr
+                    order_num=idx + 1
                 )
                 db.session.add(opt)
+                db.session.flush()
+
+            opt.text = opt_text if opt_text else None
+            opt.is_correct = is_corr
+            opt.order_num = idx + 1
+
+            # Rasmni o'chirish
+            if delete_img:
+                for om in list(opt.media):
+                    MediaService.delete_file(om.file_path)
+                    db.session.delete(om)
+                AuditService.log_action(
+                    user_id=current_user.id,
+                    action='OPTION_IMAGE_DELETED',
+                    entity='QUESTION',
+                    entity_id=question.id,
+                    new_values={'option': key}
+                )
+
+            # Yangi rasm yuklash / almashtirish
+            if new_opt_image and new_opt_image.filename:
+                has_existing_media = len(opt.media) > 0
+                for om in list(opt.media):
+                    MediaService.delete_file(om.file_path)
+                    db.session.delete(om)
+
+                try:
+                    saved = MediaService.save_image(new_opt_image, subfolder='options')
+                    if saved:
+                        opt_m = QuestionOptionMedia(
+                            option_id=opt.id,
+                            file_path=saved['file_path'],
+                            file_url=saved['file_url'],
+                            original_name=saved['original_name'],
+                            mime_type=saved['mime_type'],
+                            file_size=saved['file_size'],
+                            media_type='IMAGE',
+                            sort_order=1
+                        )
+                        db.session.add(opt_m)
+                        AuditService.log_action(
+                            user_id=current_user.id,
+                            action='OPTION_IMAGE_UPDATED' if has_existing_media else 'OPTION_IMAGE_ADDED',
+                            entity='QUESTION',
+                            entity_id=question.id,
+                            new_values={'option': key, 'file': saved['original_name']}
+                        )
+                except Exception as e:
+                    flash(f"Variant {key} rasmini saqlashda xatolik: {e}", "warning")
+
+            db.session.flush()
+            if not opt.text and not opt.media:
+                db.session.delete(opt)
 
         db.session.commit()
         AuditService.log_action(user_id=current_user.id, action='UPDATE', entity='QUESTION', entity_id=question.id)
-        flash(f"Savol yangilandi (Yangi versiya: {question.version}).", "success")
+        flash(f"Savol va variantlar muvaffaqiyatli yangilandi (Yangi versiya: {question.version}).", "success")
         return redirect(url_for('admin.questions_list'))
 
     subjects = Subject.query.filter_by(is_active=True).all()
-    topics = Topic.query.filter_by(subject_id=question.subject_id).all()
+    topics = Topic.query.filter_by(subject_id=question.subject_id).all() if question.subject_id else []
     return render_template('admin/question_form.html', question=question, subjects=subjects, topics=topics)
 
 @admin_bp.route('/questions/batch', methods=['POST'])

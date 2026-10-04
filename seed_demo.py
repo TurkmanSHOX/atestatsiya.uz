@@ -460,7 +460,77 @@ def seed():
             }
         ]
 
+        # Pillow yordamida geometrik shakllar tasvirlarini demo sifatida yaratish
+        demo_dir = os.path.join(app.root_path, 'static', 'uploads', 'demo')
+        os.makedirs(demo_dir, exist_ok=True)
+        from PIL import Image, ImageDraw
+
+        # 1. Uchburchak
+        tri_path = os.path.join(demo_dir, 'triangle.png')
+        if not os.path.exists(tri_path):
+            im_tri = Image.new('RGB', (200, 160), color='#f8fafc')
+            d_tri = ImageDraw.Draw(im_tri)
+            d_tri.polygon([(30, 140), (170, 140), (30, 30)], fill='#22c55e', outline='#15803d')
+            d_tri.rectangle([(30, 125), (45, 140)], outline='#15803d')
+            im_tri.save(tri_path)
+
+        # 2. Kvadrat
+        sq_path = os.path.join(demo_dir, 'square.png')
+        if not os.path.exists(sq_path):
+            im_sq = Image.new('RGB', (200, 160), color='#f8fafc')
+            d_sq = ImageDraw.Draw(im_sq)
+            d_sq.rectangle([(40, 30), (160, 140)], fill='#3b82f6', outline='#1d4ed8')
+            im_sq.save(sq_path)
+
+        # 3. Doira
+        cir_path = os.path.join(demo_dir, 'circle.png')
+        if not os.path.exists(cir_path):
+            im_cir = Image.new('RGB', (200, 160), color='#f8fafc')
+            d_cir = ImageDraw.Draw(im_cir)
+            d_cir.ellipse([(40, 20), (160, 140)], fill='#f59e0b', outline='#b45309')
+            im_cir.save(cir_path)
+
+        # 4. Trapetsiya
+        trp_path = os.path.join(demo_dir, 'trapezoid.png')
+        if not os.path.exists(trp_path):
+            im_trp = Image.new('RGB', (200, 160), color='#f8fafc')
+            d_trp = ImageDraw.Draw(im_trp)
+            d_trp.polygon([(60, 40), (140, 40), (170, 130), (30, 130)], fill='#ec4899', outline='#be185d')
+            im_trp.save(trp_path)
+
+        # Geometrik rasm-variantli namunaviy savollarni qo'shish
+        plan_topic = math_topic_objs.get("Planimetriya asoslari") or list(math_topic_objs.values())[0]
+        sample_questions_data.extend([
+            {
+                'subject': math_subj,
+                'topic': plan_topic,
+                'difficulty': DifficultyLevel.EASY,
+                'text': "Quyidagi tasvirlardan qaysi biri to'g'ri burchakli uchburchakni ifodalaydi?",
+                'explanation': "A variantdagi shaklda katetlar orasidagi burchak 90 gradusga teng, ya'ni to'g'ri burchakli uchburchak tasvirlangan.",
+                'options': [
+                    ('A', "To'g'ri burchakli uchburchak", '/static/uploads/demo/triangle.png', True),
+                    ('B', "To'rtburchak", '/static/uploads/demo/square.png', False),
+                    ('C', "Doira", '/static/uploads/demo/circle.png', False),
+                    ('D', "Trapetsiya", '/static/uploads/demo/trapezoid.png', False)
+                ]
+            },
+            {
+                'subject': math_subj,
+                'topic': plan_topic,
+                'difficulty': DifficultyLevel.MEDIUM,
+                'text': "Berilgan geometrik shakllar orasidan gipotenuzaga ega bo'lganini tanlang:",
+                'explanation': "Faqat to'g'ri burchakli uchburchakda to'g'ri burchak qarshisidagi tomon gipotenuza deb ataladi.",
+                'options': [
+                    ('A', "", '/static/uploads/demo/triangle.png', True),
+                    ('B', "", '/static/uploads/demo/square.png', False),
+                    ('C', "", '/static/uploads/demo/circle.png', False),
+                    ('D', "", '/static/uploads/demo/trapezoid.png', False)
+                ]
+            }
+        ])
+
         created_questions = []
+        from app.models.question import QuestionOptionMedia
         for q_data in sample_questions_data:
             q_hash = Question.calculate_hash(q_data['text'])
             q_obj = Question.query.filter_by(hash=q_hash).first()
@@ -481,7 +551,16 @@ def seed():
                 db.session.add(q_obj)
                 db.session.flush()
 
-                for opt_key, opt_text, is_corr in q_data['options']:
+                for opt_item in q_data['options']:
+                    opt_key = opt_item[0]
+                    opt_text = opt_item[1]
+                    if len(opt_item) == 4:
+                        opt_img = opt_item[2]
+                        is_corr = opt_item[3]
+                    else:
+                        opt_img = None
+                        is_corr = opt_item[2]
+
                     opt = QuestionOption(
                         question_id=q_obj.id,
                         key=opt_key,
@@ -489,6 +568,16 @@ def seed():
                         is_correct=is_corr
                     )
                     db.session.add(opt)
+                    db.session.flush()
+
+                    if opt_img:
+                        db.session.add(QuestionOptionMedia(
+                            option_id=opt.id,
+                            file_path=opt_img,
+                            file_url=opt_img,
+                            original_name=f"{opt_key}.png",
+                            media_type='IMAGE'
+                        ))
 
             created_questions.append(q_obj)
 

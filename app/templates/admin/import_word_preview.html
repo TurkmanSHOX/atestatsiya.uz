@@ -105,13 +105,25 @@
           <td>{{ loop.index }}</td>
           <td>
             <div class="fw-bold text-dark mb-2">{{ q.text }}</div>
-            <div class="row g-1">
+            {% if q.image_url %}
+            <div class="mb-2">
+              <img src="{{ q.image_url }}" alt="Savol rasmi" class="rounded border" style="max-height: 80px; max-width: 150px; object-fit: contain;">
+            </div>
+            {% endif %}
+            <div class="row g-2">
               {% for opt in q.options %}
               <div class="col-md-6">
-                <span class="badge {% if opt.is_correct %}bg-success{% else %}bg-light text-dark border{% endif %} me-1">
-                  {{ opt.key }}
-                </span>
-                <span class="{% if opt.is_correct %}fw-bold text-success{% endif %}">{{ opt.text }}</span>
+                <div class="p-1 rounded border {% if opt.is_correct %}border-success bg-success-subtle text-success fw-bold{% else %}bg-light text-dark{% endif %}">
+                  <span class="badge {% if opt.is_correct %}bg-success{% else %}bg-secondary{% endif %} me-1">
+                    {{ opt.key }}
+                  </span>
+                  <span>{{ opt.text }}</span>
+                  {% if opt.image_url %}
+                  <div class="mt-1">
+                    <img src="{{ opt.image_url }}" alt="Variant {{ opt.key }} rasmi" class="rounded border" style="max-height: 60px; max-width: 100px; object-fit: contain;">
+                  </div>
+                  {% endif %}
+                </div>
               </div>
               {% endfor %}
             </div>
