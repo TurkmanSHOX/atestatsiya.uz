@@ -1,0 +1,71 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Telegram Xabarnoma Boti{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+  <div>
+    <h1 class="h2 fw-bold text-dark mb-0">Telegram Admin Xabarnoma Boti</h1>
+    <span class="text-muted small">Click to'lovlari tasdiqlanganda zudlik bilan Telegram orqali xabar olish</span>
+  </div>
+</div>
+
+<div class="row g-4 max-w-900">
+  <div class="col-md-7">
+    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
+      <h5 class="fw-bold mb-3"><i class="bi bi-gear-fill text-primary me-2"></i> Bot Sozlamalari</h5>
+
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="save_settings">
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Telegram Bot Token</label>
+          <input type="text" name="bot_token" class="form-control" value="{{ bot_token or '' }}" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ">
+          <div class="form-text small">BotFather orqali olingan token.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Admin Chat ID / Guruh ID</label>
+          <input type="text" name="admin_chat_id" class="form-control" value="{{ chat_id or '' }}" placeholder="-100123456789 yoki 123456789">
+          <div class="form-text small">Xabar yuboriladigan shaxsiy yoki guruh chat identifikatori.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary fw-bold px-4">
+          <i class="bi bi-save me-1"></i> Sozlamalarni Saqlash
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-3">
+      <h5 class="fw-bold mb-3"><i class="bi bi-send-fill text-success me-2"></i> Sinov Xabari</h5>
+      <p class="text-muted small mb-3">Bot sozlamalarini tekshirish uchun quyidagi tugmani bosing:</p>
+      
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="test_message">
+        <button type="submit" class="btn btn-outline-success fw-bold w-100 py-2">
+          <i class="bi bi-bell-fill me-1"></i> Sinov Xabari Yuborish
+        </button>
+      </form>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3 p-3 bg-light small">
+      <h6 class="fw-bold mb-2">Xabarnoma Ko'rinishi:</h6>
+      <div class="p-3 bg-white rounded border font-monospace text-dark" style="font-size: 0.8rem;">
+        🔔 <strong>YANGI TO'LOV</strong><br><br>
+        👤 <strong>Foydalanuvchi:</strong> Jasur Karimov (+998901234567)<br>
+        📚 <strong>Fan:</strong> Barcha fanlar<br>
+        📦 <strong>Paket:</strong> 30 kunlik to'liq tayyorgarlik<br>
+        💰 <strong>Summa:</strong> 70 000 UZS<br>
+        💳 <strong>To'lov tizimi:</strong> Click<br>
+        🆔 <strong>Tranzaksiya:</strong> 123456789<br>
+        🕒 <strong>Vaqt:</strong> 2026-10-04 19:30<br>
+        ✅ <strong>Holat:</strong> PAID
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,15 +1,16 @@
 import re
+import difflib
 import pandas as pd
 from docx import Document
 from app.extensions import db
-from app.models.question import Question, QuestionOption, Subject, Topic, QuestionType, DifficultyLevel
+from app.models.question import Question, QuestionOption, Subject, Topic, SubjectSection, QuestionType, DifficultyLevel
 
 class QuestionImportService:
     @staticmethod
     def parse_excel(file_path):
         """
         Excel faylni o'qish, ustunlarni validatsiya qilish va xatolarni aniqlash.
-        Kutiladigan ustunlar: Savol matni, Variant A, Variant B, Variant C, Variant D, To'g'ri javob, Fan, Mavzu, Qiyinlik, Ball
+        Ustunlar: Fan, Bo'lim, Mavzu, Savol, A, B, C, D, To'g'ri javob, Qiyinlik, Izoh, Manba
         """
         errors = []
         parsed_questions = []
@@ -32,16 +33,18 @@ class QuestionImportService:
             'opt_d': next((c for c in df.columns if any(k in c for k in ['d', 'variant d', 'opt_d'])), None),
             'correct': next((c for c in df.columns if any(k in c for k in ["to'g'ri", 'togri', 'correct', 'javob'])), None),
             'subject': next((c for c in df.columns if any(k in c for k in ['fan', 'subject'])), None),
+            'section': next((c for c in df.columns if any(k in c for k in ["bo'lim", 'bolim', 'section'])), None),
             'topic': next((c for c in df.columns if any(k in c for k in ['mavzu', 'topic'])), None),
             'difficulty': next((c for c in df.columns if any(k in c for k in ['qiyinlik', 'daraja', 'difficulty'])), None),
-            'points': next((c for c in df.columns if any(k in c for k in ['ball', 'points', 'score'])), None)
+            'explanation': next((c for c in df.columns if any(k in c for k in ['izoh', 'tushuntirish', 'explanation'])), None),
+            'source': next((c for c in df.columns if any(k in c for k in ['manba', 'source'])), None)
         }
 
         if not col_map['text']:
             return {'success': False, 'message': "Excel jadvalida 'Savol' ustuni topilmadi.", 'errors': [], 'questions': []}
 
         for idx, row in df.iterrows():
-            row_num = idx + 2  # Excel 1-based + 1 for header
+            row_num = idx + 2
             q_text = str(row.get(col_map['text'], '')).strip()
 
             if not q_text or q_text.lower() == 'nan':
@@ -68,7 +71,7 @@ class QuestionImportService:
                 errors.append(f"{row_num}-qator: To'g'ri javob ko'rsatilmagan yoki noto'g'ri (A, B, C, D bo'lishi kerak).")
                 continue
 
-            # Duplicate tekshiruvi (hash orqali)
+            # Duplicate tekshiruvi
             q_hash = Question.calculate_hash(q_text)
             existing_db = Question.query.filter_by(hash=q_hash).first()
             is_dup = existing_db is not None
@@ -76,7 +79,8 @@ class QuestionImportService:
                 duplicates_count += 1
 
             subject_name = str(row.get(col_map['subject'], 'Umumiy')).strip() if col_map['subject'] else 'Umumiy'
-            topic_name = str(row.get(col_map['topic'], 'Asosiy')).strip() if col_map['topic'] else 'Asosiy'
+            section_name = str(row.get(col_map['section'], '')).strip() if col_map['section'] else ''
+            topic_name = str(row.get(col_map['topic'], 'Asosiy mavzu')).strip() if col_map['topic'] else 'Asosiy mavzu'
             
             raw_diff = str(row.get(col_map['difficulty'], 'MEDIUM')).strip().upper()
             if 'OSON' in raw_diff or 'EASY' in raw_diff:
@@ -86,10 +90,12 @@ class QuestionImportService:
             else:
                 diff = DifficultyLevel.MEDIUM
 
-            try:
-                pts = float(row.get(col_map['points'], 1.0)) if col_map['points'] else 1.0
-            except Exception:
-                pts = 1.0
+            explanation = str(row.get(col_map['explanation'], '')).strip() if col_map['explanation'] else ''
+            if explanation.lower() == 'nan':
+                explanation = ''
+            source = str(row.get(col_map['source'], '')).strip() if col_map['source'] else ''
+            if source.lower() == 'nan':
+                source = ''
 
             options = [
                 {'key': 'A', 'text': opt_a, 'is_correct': (correct_key == 'A')},
@@ -104,10 +110,11 @@ class QuestionImportService:
                 'row_num': row_num,
                 'text': q_text,
                 'subject': subject_name,
+                'section': section_name,
                 'topic': topic_name,
                 'difficulty': diff,
-                'points': pts,
-                'question_type': QuestionType.SINGLE_CHOICE,
+                'explanation': explanation,
+                'source': source,
                 'options': options,
                 'is_duplicate': is_dup,
                 'hash': q_hash
@@ -117,21 +124,22 @@ class QuestionImportService:
             'success': True,
             'total_rows': len(df),
             'valid_count': len(parsed_questions),
-            'errors': errors,
+            'errors_count': len(errors),
             'duplicates_count': duplicates_count,
+            'errors': errors,
             'questions': parsed_questions
         }
 
     @staticmethod
     def parse_word(file_path):
         """
-        Word (.docx) faylidan savollarni ajratish.
+        Word (.docx) fayldan savollarni ajratish.
         Format:
         1. Savol matni?
-        A) Variant
-        *B) To'g'ri javob
-        C) Variant
-        D) Variant
+        A) Variant 1
+        *B) To'g'ri variant
+        C) Variant 3
+        D) Variant 4
         """
         errors = []
         parsed_questions = []
@@ -146,161 +154,163 @@ class QuestionImportService:
         
         current_q = None
         current_options = []
-        q_counter = 0
+        line_idx = 0
 
-        # Pattern for question start: "1.", "1)", "1 - "
-        q_start_regex = re.compile(r'^\s*(\d+)[\.\)\-]\s*(.+)$')
-        # Pattern for options: "A)", "*B)", "A.", "a)"
-        opt_regex = re.compile(r'^\s*(\*?)\s*([A-Da-d])[\.\)]\s*(.+)$')
+        q_pattern = re.compile(r'^(?:savol\s*)?(\d+)[\.\)\-]\s*(.+)$', re.IGNORECASE)
+        opt_pattern = re.compile(r'^(\*?)\s*([A-Da-d])[\.\)]\s*(.+)$')
 
-        for line in paragraphs:
-            q_match = q_start_regex.match(line)
-            opt_match = opt_regex.match(line)
+        for para in paragraphs:
+            line_idx += 1
+            q_match = q_pattern.match(para)
+            opt_match = opt_pattern.match(para)
 
             if q_match:
-                # Save previous question if valid
-                if current_q and current_options:
-                    has_correct = any(opt['is_correct'] for opt in current_options)
-                    if has_correct and len(current_options) >= 2:
-                        q_hash = Question.calculate_hash(current_q['text'])
-                        is_dup = Question.query.filter_by(hash=q_hash).first() is not None
-                        if is_dup:
-                            duplicates_count += 1
+                if current_q:
+                    # Oldingi savolni tekshirish
+                    valid, err = QuestionImportService._validate_parsed_question(current_q, current_options)
+                    if valid:
                         current_q['options'] = current_options
-                        current_q['is_duplicate'] = is_dup
-                        current_q['hash'] = q_hash
                         parsed_questions.append(current_q)
                     else:
-                        errors.append(f"Savol '{current_q['number']}': To'g'ri javob belgilanmagan ('*' belgisi topilmadi) yoki variantlar yetarli emas.")
+                        errors.append(f"{current_q.get('num_str', '')}-savol: {err}")
 
-                q_counter += 1
                 q_num = q_match.group(1)
                 q_text = q_match.group(2).strip()
+                q_hash = Question.calculate_hash(q_text)
+                is_dup = Question.query.filter_by(hash=q_hash).first() is not None
+                if is_dup:
+                    duplicates_count += 1
+
                 current_q = {
-                    'number': q_num,
+                    'num_str': q_num,
                     'text': q_text,
                     'subject': 'Umumiy',
-                    'topic': 'Asosiy',
+                    'topic': 'Asosiy mavzu',
                     'difficulty': DifficultyLevel.MEDIUM,
-                    'points': 1.0,
-                    'question_type': QuestionType.SINGLE_CHOICE
+                    'is_duplicate': is_dup,
+                    'hash': q_hash
                 }
                 current_options = []
+
             elif opt_match and current_q:
-                is_correct = bool(opt_match.group(1)) or ('*' in line)
-                opt_key = opt_match.group(2).upper()
+                is_correct = bool(opt_match.group(1)) or ('*' in para)
+                key = opt_match.group(2).upper()
                 opt_text = opt_match.group(3).strip()
+                # Agar matn ichida ham * bo'lsa tozalash
+                opt_text = opt_text.replace('*', '').strip()
+
                 current_options.append({
-                    'key': opt_key,
+                    'key': key,
                     'text': opt_text,
                     'is_correct': is_correct
                 })
             elif current_q and not opt_match:
-                # Qo'shimcha matn / savol davomi
-                current_q['text'] += " " + line
+                current_q['text'] += " " + para
 
         # Oxirgi savolni saqlash
-        if current_q and current_options:
-            has_correct = any(opt['is_correct'] for opt in current_options)
-            if has_correct and len(current_options) >= 2:
-                q_hash = Question.calculate_hash(current_q['text'])
-                is_dup = Question.query.filter_by(hash=q_hash).first() is not None
-                if is_dup:
-                    duplicates_count += 1
+        if current_q:
+            valid, err = QuestionImportService._validate_parsed_question(current_q, current_options)
+            if valid:
                 current_q['options'] = current_options
-                current_q['is_duplicate'] = is_dup
-                current_q['hash'] = q_hash
                 parsed_questions.append(current_q)
             else:
-                errors.append(f"Savol '{current_q['number']}': To'g'ri javob belgilanmagan ('*' belgisi topilmadi).")
+                errors.append(f"{current_q.get('num_str', '')}-savol: {err}")
 
         return {
             'success': True,
             'total_parsed': len(parsed_questions),
-            'errors': errors,
+            'errors_count': len(errors),
             'duplicates_count': duplicates_count,
+            'errors': errors,
             'questions': parsed_questions
         }
 
     @staticmethod
-    def commit_questions(questions_data, default_subject_id=None, default_topic_id=None):
+    def _validate_parsed_question(q_data, options):
+        if len(options) < 2:
+            return False, "Variantlar soni 2 tadan kam."
+        
+        correct_count = sum(1 for o in options if o['is_correct'])
+        if correct_count == 0:
+            return False, "To'g'ri javob ko'rsatilmagan (* belgisi topilmadi)."
+        if correct_count > 1:
+            return False, f"Bir nechta to'g'ri javob ({correct_count} ta) belgilangan."
+        return True, ""
+
+    @staticmethod
+    def save_imported_questions(questions_list, default_subject_id=None, default_topic_id=None):
         """
-        Tasdiqlangan savollar ro'yxatini bazaga saqlash.
+        Admin tasdiqlagan savollarni bazaga saqlash.
         """
         imported_count = 0
-        skipped_duplicates = 0
+        skipped_count = 0
 
-        # Agar fan/mavzu ko'rsatilmagan bo'lsa standartlarini topish/yaratish
-        if not default_subject_id:
-            subj = Subject.query.filter_by(name='Umumiy').first()
-            if not subj:
-                subj = Subject(name='Umumiy', code='GEN', description='Umumiy fanlar')
-                db.session.add(subj)
-                db.session.flush()
-            default_subject_id = subj.id
-
-        if not default_topic_id:
-            top = Topic.query.filter_by(subject_id=default_subject_id, name='Asosiy').first()
-            if not top:
-                top = Topic(subject_id=default_subject_id, name='Asosiy', code='MAIN')
-                db.session.add(top)
-                db.session.flush()
-            default_topic_id = top.id
-
-        for q_item in questions_data:
-            q_text = q_item['text'].strip()
-            q_hash = q_item.get('hash') or Question.calculate_hash(q_text)
-
-            # Takroriylik tekshiruvi
-            if Question.query.filter_by(hash=q_hash).first():
-                skipped_duplicates += 1
+        for item in questions_list:
+            q_text = item.get('text', '').strip()
+            if not q_text:
                 continue
 
-            subj_id = default_subject_id
-            top_id = default_topic_id
+            q_hash = item.get('hash') or Question.calculate_hash(q_text)
+            
+            # Agar mavjud bo'lsa, o'tkazib yuborish
+            if Question.query.filter_by(hash=q_hash).first():
+                skipped_count += 1
+                continue
 
-            # Agar savolda mavzu/fan nomi kelsa:
-            if 'subject' in q_item and q_item['subject']:
-                s = Subject.query.filter_by(name=q_item['subject']).first()
-                if not s:
-                    s = Subject(name=q_item['subject'])
-                    db.session.add(s)
+            # Fan va Mavzuni aniqlash
+            subject_id = default_subject_id
+            if not subject_id and item.get('subject'):
+                subj = Subject.query.filter(Subject.name.ilike(item['subject'])).first()
+                if not subj:
+                    slug = re.sub(r'[^a-z0-9]+', '-', item['subject'].lower()).strip('-')
+                    subj = Subject(name=item['subject'], slug=slug)
+                    db.session.add(subj)
                     db.session.flush()
-                subj_id = s.id
+                subject_id = subj.id
 
-                if 'topic' in q_item and q_item['topic']:
-                    t = Topic.query.filter_by(subject_id=subj_id, name=q_item['topic']).first()
-                    if not t:
-                        t = Topic(subject_id=subj_id, name=q_item['topic'])
-                        db.session.add(t)
-                        db.session.flush()
-                    top_id = t.id
+            if not subject_id:
+                subj = Subject.query.first()
+                subject_id = subj.id if subj else 1
+
+            topic_id = default_topic_id
+            if not topic_id and item.get('topic'):
+                top = Topic.query.filter_by(subject_id=subject_id).filter(Topic.name.ilike(item['topic'])).first()
+                if not top:
+                    top = Topic(subject_id=subject_id, name=item['topic'])
+                    db.session.add(top)
+                    db.session.flush()
+                topic_id = top.id
+
+            if not topic_id:
+                top = Topic.query.filter_by(subject_id=subject_id).first()
+                topic_id = top.id if top else 1
 
             q = Question(
-                subject_id=subj_id,
-                topic_id=top_id,
-                question_type=q_item.get('question_type', QuestionType.SINGLE_CHOICE),
+                subject_id=subject_id,
+                topic_id=topic_id,
+                question_type=item.get('question_type', QuestionType.SINGLE_CHOICE),
                 text=q_text,
-                explanation=q_item.get('explanation', ''),
-                difficulty=q_item.get('difficulty', DifficultyLevel.MEDIUM),
-                points=float(q_item.get('points', 1.0)),
+                explanation=item.get('explanation', ''),
+                difficulty=item.get('difficulty', DifficultyLevel.MEDIUM),
+                source=item.get('source', ''),
                 status='ACTIVE',
+                is_approved=True,
+                version=1,
                 hash=q_hash
             )
             db.session.add(q)
             db.session.flush()
 
-            for idx, opt in enumerate(q_item.get('options', [])):
-                o = QuestionOption(
-                    question_id=q,
-                    option_key=opt.get('key', chr(65 + idx)),
+            for opt in item.get('options', []):
+                option = QuestionOption(
+                    question_id=q.id,
+                    key=opt.get('key', 'A'),
                     text=opt.get('text', ''),
-                    is_correct=bool(opt.get('is_correct', False)),
-                    order_index=idx
+                    is_correct=opt.get('is_correct', False)
                 )
-                db.session.add(o)
+                db.session.add(option)
 
             imported_count += 1
 
         db.session.commit()
-        return {'success': True, 'imported_count': imported_count, 'skipped_duplicates': skipped_duplicates}
+        return {'imported': imported_count, 'skipped': skipped_count}

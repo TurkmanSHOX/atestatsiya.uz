@@ -1,0 +1,65 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Paketlar va Narxlar{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+  <div>
+    <h1 class="h2 fw-bold text-dark mb-0">Tayyorgarlik Paketlari (Obunalar)</h1>
+    <span class="text-muted small">Foydalanuvchilarga sotiladigan pullik tariflarni boshqarish</span>
+  </div>
+  <a href="{{ url_for('admin.package_create') }}" class="btn btn-success fw-bold">
+    <i class="bi bi-plus-circle me-1"></i> Yangi Paket Yaratish
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Nomi</th>
+          <th>Narxi</th>
+          <th>Amal qilish muddati</th>
+          <th>Testlar soni</th>
+          <th>Fanlar qamrovi</th>
+          <th>Holat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pkg in packages %}
+        <tr>
+          <td>
+            <div class="fw-bold text-dark">{{ pkg.name }}</div>
+            <div class="text-muted small"><code>{{ pkg.slug }}</code></div>
+          </td>
+          <td class="fw-bold text-success fs-6">{{ pkg.formatted_price() }}</td>
+          <td>{{ pkg.duration_days }} kun</td>
+          <td>
+            {% if pkg.test_limit %}
+              {{ pkg.test_limit }} ta test
+            {% else %}
+              <span class="badge bg-success-subtle text-success">Cheksiz testlar</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if pkg.is_all_subjects %}
+              <span class="badge bg-primary-subtle text-primary">Barcha fanlar</span>
+            {% else %}
+              <span class="badge bg-secondary-subtle text-secondary">Tanlangan fan</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {% if pkg.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+              {% if pkg.is_active %}Faol{% else %}Nofaol{% endif %}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center text-muted py-4">Paketlar mavjud emas</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

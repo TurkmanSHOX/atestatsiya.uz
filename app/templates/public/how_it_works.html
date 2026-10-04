@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Qanday Ishlaydi? - Attestatsiyaga Tayyorlov{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-5 text-center">
+  <div class="container max-w-700">
+    <h1 class="fw-bold mb-3">Platforma Qanday Ishlaydi?</h1>
+    <p class="text-white-50 mb-0">Maktab o'qituvchilari uchun onlayn tayyorgarlik va bilimni baholash bosqichlari.</p>
+  </div>
+</div>
+
+<div class="container my-5 max-w-900">
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+        <div class="d-flex align-items-start gap-4">
+          <div class="badge bg-success p-3 rounded-circle fs-3">1</div>
+          <div>
+            <h4 class="fw-bold mb-2">1. Tezkor Ro'yxatdan O'tish</h4>
+            <p class="text-muted">F.I.Sh., telefon raqamingiz, maktabingiz va o'qitadigan faningizni kiritib shaxsiy kabinet ochasiz. Hech qanday hujjat yoki diplom yuklash talab etilmaydi.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+        <div class="d-flex align-items-start gap-4">
+          <div class="badge bg-success p-3 rounded-circle fs-3">2</div>
+          <div>
+            <h4 class="fw-bold mb-2">2. Fan va Test Turini Tanlash</h4>
+            <p class="text-muted">O'zingizga qulay bo'lgan formatni tanlang:</p>
+            <ul class="text-muted small">
+              <li><strong>Mavzu bo'yicha test:</strong> Faqat ma'lum bir mavzuni puxta o'zlashtirish uchun.</li>
+              <li><strong>Fan bo'yicha test:</strong> Barcha mavzularni qamrab olgan keng qamrovli test.</li>
+              <li><strong>Attestatsiya simulyatsiyasi:</strong> 50 ta savol, 90 daqiqa vaqt bilan haqiqiy imtihon muhiti.</li>
+              <li><strong>Xatolarim:</strong> Ilgari xato qilgan savollaringizdan avtomatik test tuzish.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+        <div class="d-flex align-items-start gap-4">
+          <div class="badge bg-success p-3 rounded-circle fs-3">3</div>
+          <div>
+            <h4 class="fw-bold mb-2">3. Server Nazoratidagi Test Sinovi</h4>
+            <p class="text-muted">Test vaqti serverda aniq hisoblanadi. Sahifani yangilasangiz yoki internet uzilsa ham javoblaringiz saqlanib qoladi va testni qolgan vaqtdan davom ettirishingiz mumkin.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
+        <div class="d-flex align-items-start gap-4">
+          <div class="badge bg-success p-3 rounded-circle fs-3">4</div>
+          <div>
+            <h4 class="fw-bold mb-2">4. Chuqur Tahlil va AI Tavsiyalar</h4>
+            <p class="text-muted">Test tugashi bilan to'plangan ball, mavzular kesimidagi aniqlik foizi va qaysi mavzularda zaif ekanligingiz ko'rsatiladi. Sun'iy intellekt sizga qaysi mavzularni ko'proq takrorlash bo'yicha shaxsiy o'quv rejasini tavsiya qiladi.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center mt-5">
+    <a href="{{ url_for('public.subjects') }}" class="btn btn-success btn-lg px-5 fw-bold shadow">
+      Hozir Boshlash <i class="bi bi-arrow-right ms-2"></i>
+    </a>
+  </div>
+</div>
+{% endblock %}

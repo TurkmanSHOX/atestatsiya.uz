@@ -5,42 +5,62 @@
 {% block content %}
 <div class="bg-light py-4 border-bottom">
   <div class="container">
-    <h2 class="fw-bold text-dark mb-1">Mening Sinov Natijalarim Tarixi</h2>
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-0 small">
-        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Kabinet</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Natijalarim</li>
-      </ol>
-    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h2 class="fw-bold text-dark mb-1">Mening Sinov Natijalarim Tarixi</h2>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Boshqaruv paneli</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Natijalarim</li>
+          </ol>
+        </nav>
+      </div>
+      <div>
+        <a href="{{ url_for('user.tests_catalog') }}" class="btn btn-gov-primary">
+          <i class="bi bi-play-circle me-1"></i> Yangi test ishlash
+        </a>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="container py-5">
+  <div class="alert alert-info py-2 px-3 small mb-4 d-flex align-items-center">
+    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+    <div>
+      Eslatma: Ushbu natijalar attestatsiyaga mustaqil tayyorgarlik uchun simulyatsiya va tahlil hisoblanadi hamda rasmiy davlat attestatsiyasi sertifikati hisoblanmaydi.
+    </div>
+  </div>
+
   {% if results %}
   <div class="card border rounded-3 p-4 bg-white shadow-sm">
     <div class="table-responsive">
       <table class="table table-hover align-middle">
         <thead class="table-light">
           <tr>
-            <th>Attestatsiya</th>
+            <th>Test nomi</th>
             <th>Sana</th>
             <th class="text-center">Savollar</th>
             <th class="text-center">To'g'ri</th>
+            <th class="text-center">Vaqt</th>
             <th class="text-center">Natija</th>
             <th class="text-center">Holati</th>
-            <th class="text-end">Harakatlar</th>
+            <th class="text-end">Harakat</th>
           </tr>
         </thead>
         <tbody>
           {% for r in results %}
           <tr>
             <td>
-              <strong class="d-block text-dark">{{ r.attestation.title }}</strong>
-              <span class="text-muted small">Vaqt: {{ r.formatted_completion_time() }}</span>
+              <strong class="d-block text-dark">{{ r.test.title if r.test else 'Test' }}</strong>
+              {% if r.test and r.test.subject %}
+              <span class="badge bg-light text-dark border">{{ r.test.subject.name }}</span>
+              {% endif %}
             </td>
-            <td>{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>{{ r.created_at.strftime('%d.%m.%Y %H:%M') if r.created_at else '-' }}</td>
             <td class="text-center">{{ r.total_questions }}</td>
             <td class="text-center fw-bold text-success">{{ r.correct_answers }}</td>
+            <td class="text-center text-muted small">{{ r.formatted_completion_time() }}</td>
             <td class="text-center">
               <span class="fs-6 fw-bold {% if r.is_passed %}text-success{% else %}text-danger{% endif %}">
                 {{ r.percentage }}%
@@ -48,20 +68,15 @@
             </td>
             <td class="text-center">
               {% if r.is_passed %}
-              <span class="badge bg-success">O'tdi</span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">O'tdi</span>
               {% else %}
-              <span class="badge bg-danger">O'tmadi</span>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">O'tmadi</span>
               {% endif %}
             </td>
             <td class="text-end">
               <a href="{{ url_for('user.result_detail', result_id=r.id) }}" class="btn btn-sm btn-outline-primary">
-                Tafsilotlar
+                Tahlilni ko'rish <i class="bi bi-arrow-right ms-1"></i>
               </a>
-              {% if r.is_passed and r.certificate %}
-              <a href="/{{ r.certificate.pdf_path }}" target="_blank" class="btn btn-sm btn-gov-primary">
-                <i class="bi bi-file-earmark-pdf"></i>
-              </a>
-              {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -71,9 +86,16 @@
   </div>
   {% else %}
   <div class="card border rounded-3 p-5 text-center bg-white shadow-sm">
-    <i class="bi bi-journal-x text-muted fs-1 mb-3 d-block"></i>
+    <div class="text-muted fs-1 mb-3">
+      <i class="bi bi-journal-x"></i>
+    </div>
     <h4 class="fw-bold text-dark">Hozircha natijalar mavjud emas</h4>
-    <p class="text-muted small">Siz hali birorta ham attestatsiya imtihonini yakunlamadingiz.</p>
+    <p class="text-muted small mb-4">Siz hali birorta ham test sinovini yakunlamadingiz. Bilimingizni sinash uchun test boshlang!</p>
+    <div>
+      <a href="{{ url_for('user.tests_catalog') }}" class="btn btn-gov-primary">
+        <i class="bi bi-play-circle me-1"></i> Test topshirishni boshlash
+      </a>
+    </div>
   </div>
   {% endif %}
 </div>

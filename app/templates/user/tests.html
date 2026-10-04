@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Testlar Katalogi - Attestatsiyaga Tayyorlov{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-5">
+  <div class="container">
+    <h1 class="fw-bold mb-2">Test Sinovlari</h1>
+    <p class="text-white-50 mb-0">O'zingizga qulay formatdagi testni tanlang va bilimlaringizni sinovdan o'tkazing.</p>
+  </div>
+</div>
+
+<div class="container my-5">
+  <!-- Test Turlari Kartochkalari -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-light hover-lift">
+        <div class="p-3 bg-success-subtle text-success rounded-circle mx-auto mb-3" style="width: 60px; height: 60px;">
+          <i class="bi bi-mortarboard-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold">Attestatsiya Simulyatsiyasi</h5>
+        <p class="text-muted small mb-4">50 ta savol, 90 daqiqa vaqt. Barcha qiyinlik darajalari (20 oson, 20 o'rta, 10 qiyin) bo'yicha to'liq imtihon shakli.</p>
+        <a href="#subjects-section" class="btn btn-success fw-bold w-100 mt-auto">Fan bo'yicha tanlash</a>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-light hover-lift">
+        <div class="p-3 bg-danger-subtle text-danger rounded-circle mx-auto mb-3" style="width: 60px; height: 60px;">
+          <i class="bi bi-x-circle-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold">Xatolarim Ustida Ishlash</h5>
+        <p class="text-muted small mb-4">Oldingi testlarda adashgan savollaringiz to'plami. Xatolarni qayta tahlil qilib, to'g'ri ishlash imkoniyati.</p>
+        <form method="POST" action="{{ url_for('user.create_mistakes_test') }}" class="mt-auto">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-danger fw-bold w-100">Xatolarimdan test boshlash</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-light hover-lift">
+        <div class="p-3 bg-warning-subtle text-warning rounded-circle mx-auto mb-3" style="width: 60px; height: 60px;">
+          <i class="bi bi-lightning-charge-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold">Zaif Mavzularni Sinash</h5>
+        <p class="text-muted small mb-4">Aniqligi 60% dan past bo'lgan mavzulardan tuzilgan maxsus test. Bilim darajasini oshirish uchun tavsiya etiladi.</p>
+        <form method="POST" action="{{ url_for('user.create_weak_topics_test') }}" class="mt-auto">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-warning text-dark fw-bold w-100">Zaif mavzularni ishlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fanlar Bo'yicha Testlar -->
+  <div id="subjects-section" class="pt-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold mb-0">Fanlar Kesimida Tayyorgarlik</h3>
+    </div>
+
+    <div class="row g-4">
+      {% for subj in subjects %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 hover-lift">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="badge bg-secondary-subtle text-secondary">{{ subj.category }}</span>
+            <span class="badge bg-success-subtle text-success">{{ subj.academic_year }}</span>
+          </div>
+          <h5 class="fw-bold text-dark mb-2">{{ subj.name }}</h5>
+          <p class="text-muted small mb-3">{{ subj.description or "Ushbu fanning barcha mavzulari va simulyatsiya testlari." }}</p>
+
+          <div class="d-flex justify-content-between small text-muted py-2 border-top border-bottom my-3">
+            <span><i class="bi bi-folder2 text-success me-1"></i> {{ subj.topics|length }} ta mavzu</span>
+            <span><i class="bi bi-question-circle text-success me-1"></i> {{ subj.questions|length }} ta savol</span>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('user.subject_tests', subject_id=subj.id) }}" class="btn btn-outline-success w-100 fw-bold">
+              Mavzuli testlar
+            </a>
+            <form method="POST" action="{{ url_for('user.start_simulation', subject_id=subj.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-success fw-bold px-3" title="50 talik Simulyatsiya">
+                <i class="bi bi-play-fill fs-5"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

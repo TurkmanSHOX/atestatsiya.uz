@@ -1,0 +1,145 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Excel Import Preview - Admin Paneli{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0">Excel Import: Tahlil Natijalari (Preview)</h1>
+    <span class="text-muted small">Fayl: {{ filename }} | Bazaga yuklashdan oldin ma'lumotlarni tekshiring</span>
+  </div>
+  <a href="{{ url_for('admin.import_excel') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Boshqa fayl tanlash
+  </a>
+</div>
+
+{% if not result.success %}
+<div class="alert alert-danger py-3">
+  <h6 class="fw-bold mb-1"><i class="bi bi-x-octagon-fill me-2"></i> Xatolik yuz berdi:</h6>
+  <p class="mb-0">{{ result.message }}</p>
+</div>
+{% else %}
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm">
+      <div class="text-muted small">Jami aniqlangan savollar</div>
+      <div class="h3 fw-bold text-primary mb-0">{{ result.total }} ta</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm">
+      <div class="text-muted small">Takroriy savollar (Duplikat)</div>
+      <div class="h3 fw-bold text-warning mb-0">{{ result.duplicates }} ta</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm">
+      <div class="text-muted small">Xatoliklar / Ogohlantirishlar</div>
+      <div class="h3 fw-bold {% if result.errors %}text-danger{% else %}text-success{% endif %} mb-0">{{ result.errors|length }} ta</div>
+    </div>
+  </div>
+</div>
+
+{% if result.errors %}
+<div class="alert alert-warning py-3 mb-4">
+  <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i> Quyidagi qatorlarda noaniqliklar aniqlandi:</h6>
+  <ul class="mb-0 ps-3 small">
+    {% for err in result.errors %}
+    <li>{{ err }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<form method="POST" action="{{ url_for('admin.import_confirm') }}" class="card border rounded-3 p-4 bg-white shadow-sm mb-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="questions_json" value='{{ result.questions | tojson }}'>
+
+  <h5 class="fw-bold text-dark mb-3">Birlamchi parametrlar</h5>
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <label class="form-label small fw-bold">Birlamchi Fan (faylda fan ko'rsatilmagan bo'lsa)</label>
+      <select name="default_subject_id" class="form-select" id="defaultSubjectSelect">
+        <option value="">Fayldagi fanni avtomatik olish</option>
+        {% for s in subjects %}
+        <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label small fw-bold">Birlamchi Mavzu (ixtiyoriy)</label>
+      <select name="default_topic_id" class="form-select" id="defaultTopicSelect">
+        <option value="">Fayldagi mavzuni avtomatik olish</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center border-top pt-3">
+    <span class="text-muted small">
+      <i class="bi bi-info-circle me-1"></i> Bazada allaqachon mavjud bo'lgan takroriy savollar avtomatik ravishda tashlab ketiladi.
+    </span>
+    <button type="submit" class="btn btn-success fw-bold px-4" {% if not result.questions %}disabled{% endif %}>
+      <i class="bi bi-check2-circle me-1"></i> Savollarni tasdiqlash va saqlash ({{ result.questions|length }})
+    </button>
+  </div>
+</form>
+
+<div class="card border rounded-3 bg-white shadow-sm overflow-hidden mb-5">
+  <div class="card-header bg-light py-3">
+    <h6 class="fw-bold text-dark mb-0">Savollar ro'yxati (Tahlil qilingan ko'rinish)</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th>Savol matni va variantlari</th>
+          <th>Fan / Mavzu</th>
+          <th>Qiyinlik</th>
+          <th>Holat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in result.questions %}
+        <tr class="{% if q.is_duplicate %}table-warning{% endif %}">
+          <td>{{ q.row_num }}</td>
+          <td>
+            <div class="fw-bold text-dark mb-2">{{ q.text }}</div>
+            <div class="row g-1">
+              {% for opt in q.options %}
+              <div class="col-md-6">
+                <span class="badge {% if opt.is_correct %}bg-success{% else %}bg-light text-dark border{% endif %} me-1">
+                  {{ opt.key }}
+                </span>
+                <span class="{% if opt.is_correct %}fw-bold text-success{% endif %}">{{ opt.text }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% if q.explanation %}
+            <div class="text-muted fst-italic mt-1"><i class="bi bi-info-circle me-1"></i> {{ q.explanation }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <div class="fw-bold">{{ q.subject }}</div>
+            <div class="text-muted small">{{ q.topic }}</div>
+          </td>
+          <td>
+            <span class="badge bg-secondary">{{ q.difficulty }}</span>
+          </td>
+          <td>
+            {% if q.is_duplicate %}
+            <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i> Duplikat</span>
+            {% else %}
+            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Yangi</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

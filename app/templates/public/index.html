@@ -1,63 +1,84 @@
 {% extends "base.html" %}
 
-{% block title %}Bosh sahifa - O'zbekiston Professional Attestatsiya Tizimi{% endblock %}
+{% block title %}Attestatsiyaga Tayyorlov Platformasi{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-section">
-  <div class="container">
+<section class="gov-hero py-5">
+  <div class="container py-lg-4">
     <div class="row align-items-center g-5">
       <div class="col-lg-7">
-        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-semibold mb-3">
-          <i class="bi bi-patch-check-fill me-1"></i> Davlat va Xalqaro Standartlariga Muvofiq
+        <span class="badge bg-success text-white px-3 py-2 rounded-pill fw-semibold mb-3">
+          <i class="bi bi-patch-check-fill me-1"></i> O'zbekiston Maktab O'qituvchilari Uchun
         </span>
-        <h1 class="display-5 fw-bold text-dark mb-4">
-          Professional Attestatsiya va Imtihonlarni Onlayn Topshiring
+        <h1 class="display-4 fw-extrabold text-white mb-3 lh-sm">
+          ATTESTATSIYAGA ISHONCH BILAN TAYYORLANING
         </h1>
-        <p class="lead text-secondary mb-4">
-          Pedagoglar, davlat xizmatchilari va soha mutaxassislari uchun xolis, shaffof, avtomatlashtirilgan va QR-kodli rasmiy sertifikat beruvchi milliy platforma.
+        <p class="lead text-white-50 mb-4 fs-5">
+          O'zbekiston maktab o'qituvchilari uchun fanlar bo'yicha testlar, mavzular, attestatsiya simulyatsiyalari va shaxsiy natijalar tahlili.
         </p>
-        <div class="d-flex flex-wrap gap-3">
-          <a href="{{ url_for('public.attestations') }}" class="btn btn-gov-primary btn-lg px-4 shadow-sm">
-            <i class="bi bi-compass me-2"></i> Attestatsiyalarni tanlash
+
+        <div class="d-flex flex-wrap gap-3 mb-4">
+          <a href="{{ url_for('public.subjects') }}" class="btn btn-success btn-lg px-4 fw-bold shadow-sm">
+            <i class="bi bi-grid-fill me-2"></i> Fanlarni ko'rish
           </a>
-          <a href="{{ url_for('public.verify_certificate', cert_no='check') }}" class="btn btn-gov-outline btn-lg px-4">
-            <i class="bi bi-qr-code-scan me-2"></i> Sertifikatni tekshirish
-          </a>
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('user.tests_catalog') }}" class="btn btn-light btn-lg px-4 fw-bold text-success shadow-sm">
+              <i class="bi bi-play-circle-fill me-2"></i> Testni boshlash
+            </a>
+          {% else %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4 fw-bold text-success shadow-sm">
+              <i class="bi bi-person-plus-fill me-2"></i> Ro'yxatdan o'tish
+            </a>
+          {% endif %}
+        </div>
+
+        <div class="d-flex align-items-center gap-4 text-white-50 small pt-2">
+          <div><i class="bi bi-check-circle-fill text-success me-1"></i> 26+ maktab fanlari</div>
+          <div><i class="bi bi-check-circle-fill text-success me-1"></i> AI shaxsiy tavsiyalari</div>
+          <div><i class="bi bi-check-circle-fill text-success me-1"></i> Xatolar ustida ishlash</div>
         </div>
       </div>
+
       <div class="col-lg-5">
-        <div class="card border-0 shadow-lg p-4 bg-white rounded-4">
-          <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-shaded text-success me-2"></i> Attestatsiya jarayoni</h5>
-          <div class="list-group list-group-flush small">
-            <div class="list-group-item d-flex align-items-center py-3">
-              <span class="badge bg-success rounded-circle me-3 p-2">1</span>
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+          <div class="card-header bg-dark text-white py-3 px-4 d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-graph-up me-2 text-success"></i> Tayyorgarlik Samaradorligi</span>
+            <span class="badge bg-success">Onlayn</span>
+          </div>
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+              <div class="bg-success-subtle p-3 rounded-circle me-3 text-success">
+                <i class="bi bi-bullseye fs-3"></i>
+              </div>
               <div>
-                <strong class="d-block text-dark">Ro'yxatdan o'tish</strong>
-                <span class="text-muted">Shaxsiy va kasbiy ma'lumotlarni to'ldirish</span>
+                <h6 class="mb-1 fw-bold text-dark">Tayyorgarlik darajasi indeksi</h6>
+                <div class="text-muted small">Mavzular va testlar qamrovi bo'yicha tahlil</div>
               </div>
             </div>
-            <div class="list-group-item d-flex align-items-center py-3">
-              <span class="badge bg-success rounded-circle me-3 p-2">2</span>
+
+            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+              <div class="bg-warning-subtle p-3 rounded-circle me-3 text-warning">
+                <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+              </div>
               <div>
-                <strong class="d-block text-dark">Yo'nalish va to'lov</strong>
-                <span class="text-muted">Attestatsiyani tanlash va chek yuklash</span>
+                <h6 class="mb-1 fw-bold text-dark">Zaif mavzularni aniqlash</h6>
+                <div class="text-muted small">Xato ko'p bo'lgan bo'limlar ajratib ko'rsatiladi</div>
               </div>
             </div>
-            <div class="list-group-item d-flex align-items-center py-3">
-              <span class="badge bg-success rounded-circle me-3 p-2">3</span>
+
+            <div class="d-flex align-items-center">
+              <div class="bg-primary-subtle p-3 rounded-circle me-3 text-primary">
+                <i class="bi bi-cpu-fill fs-3"></i>
+              </div>
               <div>
-                <strong class="d-block text-dark">Onlayn imtihon</strong>
-                <span class="text-muted">Anti-cheat va proktoring nazoratida test</span>
+                <h6 class="mb-1 fw-bold text-dark">AI tavsiyalar & Reja</h6>
+                <div class="text-muted small">Qaysi mavzudan test ishlash bo'yicha yo'riqnoma</div>
               </div>
             </div>
-            <div class="list-group-item d-flex align-items-center py-3">
-              <span class="badge bg-success rounded-circle me-3 p-2">4</span>
-              <div>
-                <strong class="d-block text-dark">QR Sertifikat</strong>
-                <span class="text-muted">Haqiqiyligi tasdiqlangan elektron sertifikat</span>
-              </div>
-            </div>
+          </div>
+          <div class="card-footer bg-light p-3 text-center border-0">
+            <span class="text-muted small">Boshlang'ich paket: <strong>10 000 so'm</strong>dan</span>
           </div>
         </div>
       </div>
@@ -65,74 +86,64 @@
   </div>
 </section>
 
-<!-- Statistics Bar -->
-<section class="py-4 bg-white border-bottom">
+<!-- Statistika -->
+<section class="py-4 bg-white border-bottom shadow-sm">
   <div class="container">
     <div class="row text-center g-4">
-      <div class="col-md-3 col-6">
-        <h3 class="fw-bold text-success mb-1">{{ stats.attestations_count }}+</h3>
-        <p class="text-muted small mb-0">Faol Attestatsiya Dasturlari</p>
+      <div class="col-6 col-md-3">
+        <h2 class="fw-extrabold text-success mb-0">{{ stats.subjects_count }}+</h2>
+        <div class="text-muted small fw-semibold">Attestatsiya fanlari</div>
       </div>
-      <div class="col-md-3 col-6">
-        <h3 class="fw-bold text-dark mb-1">{{ stats.candidates_count }}+</h3>
-        <p class="text-muted small mb-0">Ro'yxatdan O'tgan Nomzodlar</p>
+      <div class="col-6 col-md-3">
+        <h2 class="fw-extrabold text-success mb-0">{{ stats.questions_count }}+</h2>
+        <div class="text-muted small fw-semibold">Professional savollar</div>
       </div>
-      <div class="col-md-3 col-6">
-        <h3 class="fw-bold text-primary mb-1">{{ stats.passed_count }}+</h3>
-        <p class="text-muted small mb-0">Muvaffaqiyatli Sinovlar</p>
+      <div class="col-6 col-md-3">
+        <h2 class="fw-extrabold text-success mb-0">{{ stats.teachers_count }}+</h2>
+        <div class="text-muted small fw-semibold">Faol o'qituvchilar</div>
       </div>
-      <div class="col-md-3 col-6">
-        <h3 class="fw-bold text-success mb-1">{{ stats.certificates_issued }}+</h3>
-        <p class="text-muted small mb-0">Berilgan Rasmiy Sertifikatlar</p>
+      <div class="col-6 col-md-3">
+        <h2 class="fw-extrabold text-success mb-0">{{ stats.tests_completed }}+</h2>
+        <div class="text-muted small fw-semibold">Ishlangan testlar</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Active Attestations Section -->
-<section class="py-5">
+<!-- Ommabop Fanlar -->
+<section class="py-5 bg-light">
   <div class="container">
     <div class="d-flex justify-content-between align-items-end mb-4">
       <div>
-        <h2 class="fw-bold text-dark mb-1">Ommabop Attestatsiyalar</h2>
-        <p class="text-muted mb-0">Mutaxassisligingiz bo'yicha mos attestatsiya dasturini tanlang</p>
+        <span class="badge bg-success-subtle text-success px-3 py-1 mb-2">Attestatsiya Yo'nalishlari</span>
+        <h3 class="fw-bold mb-0">Maktab Fanlari Bo'yicha Testlar</h3>
       </div>
-      <a href="{{ url_for('public.attestations') }}" class="btn btn-outline-success fw-semibold">
-        Barchasini ko'rish <i class="bi bi-arrow-right ms-1"></i>
+      <a href="{{ url_for('public.subjects') }}" class="btn btn-outline-success fw-bold">
+        Barcha fanlar ({{ stats.subjects_count }}+) <i class="bi bi-arrow-right ms-1"></i>
       </a>
     </div>
 
     <div class="row g-4">
-      {% for att in attestations %}
-      <div class="col-lg-4 col-md-6">
-        <div class="card h-100 gov-card border rounded-3 p-4 d-flex flex-column">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
-              {{ att.field_name }}
-            </span>
-            <span class="fw-bold text-primary">{{ att.formatted_price() }}</span>
+      {% for subj in subjects %}
+      <div class="col-lg-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm rounded-3 hover-lift">
+          <div class="card-body p-4 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-secondary-subtle text-secondary">{{ subj.category }}</span>
+              <span class="badge bg-success-subtle text-success">{{ subj.academic_year }}</span>
+            </div>
+            <h5 class="fw-bold mb-2 text-dark">{{ subj.name }}</h5>
+            <p class="text-muted small flex-grow-1">
+              {{ subj.description or "Ushbu fan bo'yicha attestatsiya savollari, mavzular va simulyatsiya testlari." }}
+            </p>
+            <div class="d-flex justify-content-between text-muted small pt-3 border-top mb-3">
+              <span><i class="bi bi-folder2-open me-1"></i> {{ subj.topics|length }} ta mavzu</span>
+              <span><i class="bi bi-question-circle me-1"></i> {{ subj.questions|length }} ta savol</span>
+            </div>
+            <a href="{{ url_for('public.subject_detail', slug=subj.slug) }}" class="btn btn-outline-success w-100 fw-semibold">
+              Mavzularni ko'rish
+            </a>
           </div>
-          <h5 class="fw-bold text-dark mb-2">{{ att.title }}</h5>
-          <p class="text-muted small flex-grow-1 mb-4">{{ att.short_description }}</p>
-          
-          <div class="row g-2 text-muted small border-top pt-3 mb-4">
-            <div class="col-6">
-              <i class="bi bi-question-circle me-1 text-success"></i> {{ att.questions_count }} ta savol
-            </div>
-            <div class="col-6">
-              <i class="bi bi-stopwatch me-1 text-success"></i> {{ att.duration_minutes }} daqiqa
-            </div>
-            <div class="col-6">
-              <i class="bi bi-check2-circle me-1 text-success"></i> O'tish bali: {{ att.passing_score }}%
-            </div>
-            <div class="col-6">
-              <i class="bi bi-arrow-repeat me-1 text-success"></i> {{ att.max_attempts }} ta urinish
-            </div>
-          </div>
-
-          <a href="{{ url_for('public.attestation_detail', slug=att.slug) }}" class="btn btn-gov-primary w-100">
-            Batafsil va Ro'yxatdan o'tish
-          </a>
         </div>
       </div>
       {% endfor %}
@@ -140,34 +151,151 @@
   </div>
 </section>
 
-<!-- Advantages & Security -->
-<section class="py-5 bg-white border-top border-bottom">
+<!-- Qanday ishlaydi? -->
+<section class="py-5 bg-white">
   <div class="container">
     <div class="text-center max-w-700 mx-auto mb-5">
-      <h2 class="fw-bold text-dark">Nima uchun Attestatsiya.uz?</h2>
-      <p class="text-muted">Platforma shaffoflik, xavfsizlik va adolatli baholash prinsiplari asosida yaratilgan.</p>
+      <span class="badge bg-success-subtle text-success px-3 py-1 mb-2">Qulay Jarayon</span>
+      <h3 class="fw-bold">Platformada Qanday Tayyorlanasiz?</h3>
+      <p class="text-muted">4 ta oddiy bosqichda bilimlaringizni sinab ko'ring va attestatsiyaga to'liq tayyor bo'ling</p>
     </div>
 
-    <div class="row g-4">
-      <div class="col-md-4">
-        <div class="p-4 rounded-3 border bg-light h-100">
-          <div class="fs-1 text-success mb-3"><i class="bi bi-cpu"></i></div>
-          <h5 class="fw-bold text-dark">Sun'iy Intellekt va Anti-Cheat</h5>
-          <p class="text-muted small mb-0">Imtihon davomida brauzer xatti-harakatlari, tab almashtirish va ruxsatsiz urinishlar real vaqt rejimida qayd etiladi.</p>
+    <div class="row g-4 text-center">
+      <div class="col-md-3">
+        <div class="p-4 rounded-4 bg-light h-100">
+          <div class="badge bg-success p-3 rounded-circle fs-4 mb-3">1</div>
+          <h5 class="fw-bold">Fanni tanlang</h5>
+          <p class="text-muted small">O'zingiz dars beradigan fanni va kerakli mavzuni belgilang.</p>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="p-4 rounded-3 border bg-light h-100">
-          <div class="fs-1 text-success mb-3"><i class="bi bi-shuffle"></i></div>
-          <h5 class="fw-bold text-dark">Stratifikatsiyalangan Randomizatsiya</h5>
-          <p class="text-muted small mb-0">Har bir nomzod uchun savollar mavzular va qiyinlik kvotalari asosida individual shakllanadi. Savollar takrorlanmaydi.</p>
+      <div class="col-md-3">
+        <div class="p-4 rounded-4 bg-light h-100">
+          <div class="badge bg-success p-3 rounded-circle fs-4 mb-3">2</div>
+          <h5 class="fw-bold">Test ishlang</h5>
+          <p class="text-muted small">Mavzuli test, aralash test yoki 50 talik to'liq simulyatsiyani bajaring.</p>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="p-4 rounded-3 border bg-light h-100">
-          <div class="fs-1 text-success mb-3"><i class="bi bi-qr-code"></i></div>
-          <h5 class="fw-bold text-dark">Haqiqiy QR Verifikatsiya</h5>
-          <p class="text-muted small mb-0">Elektron sertifikatlar davlat reestriga kiritiladi va istalgan ish beruvchi tomonidan QR orqali tekshirilishi mumkin.</p>
+      <div class="col-md-3">
+        <div class="p-4 rounded-4 bg-light h-100">
+          <div class="badge bg-success p-3 rounded-circle fs-4 mb-3">3</div>
+          <h5 class="fw-bold">Xatolarni tahlil qiling</h5>
+          <p class="text-muted small">Qaysi savolda adashganingizni va zaif mavzularingizni ko'ring.</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="p-4 rounded-4 bg-light h-100">
+          <div class="badge bg-success p-3 rounded-circle fs-4 mb-3">4</div>
+          <h5 class="fw-bold">AI tavsiyasini oling</h5>
+          <p class="text-muted small">Sun'iy intellekt keyingi qadamlar va zaif mavzular bo'yicha reja tuzib beradi.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Paketlar va Narxlar -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="text-center max-w-700 mx-auto mb-5">
+      <span class="badge bg-success-subtle text-success px-3 py-1 mb-2">Hamyonbop Tariflar</span>
+      <h3 class="fw-bold">Tayyorgarlik Paketlari</h3>
+      <p class="text-muted">Boshlang'ich narx 10 000 so'mdan. To'lovlar <strong>Click</strong> orqali bir zumda amalga oshiriladi.</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      {% for pkg in packages %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 border-0 shadow rounded-4 p-4 {% if loop.index == 2 %}border border-2 border-success position-relative{% endif %}">
+          {% if loop.index == 2 %}
+          <span class="position-absolute top-0 start-50 translate-middle badge bg-success px-3 py-2 rounded-pill">
+            Eng ommabop
+          </span>
+          {% endif %}
+          <div class="card-body d-flex flex-column text-center">
+            <h5 class="fw-bold text-dark mb-2">{{ pkg.name }}</h5>
+            <p class="text-muted small mb-4">{{ pkg.description or "To'liq tayyorgarlik imkoniyati." }}</p>
+            
+            <div class="my-3">
+              <span class="display-5 fw-extrabold text-success">{{ pkg.formatted_price() }}</span>
+              <span class="text-muted small d-block">/ {{ pkg.duration_days }} kun</span>
+            </div>
+
+            <ul class="list-unstyled text-start small my-4 flex-grow-1">
+              {% for f in pkg.features %}
+              <li class="mb-2"><i class="bi bi-check2 text-success fw-bold me-2"></i> {{ f }}</li>
+              {% else %}
+              <li class="mb-2"><i class="bi bi-check2 text-success fw-bold me-2"></i> Barcha fanlar ochiq</li>
+              <li class="mb-2"><i class="bi bi-check2 text-success fw-bold me-2"></i> Xatolar ustida ishlash</li>
+              <li class="mb-2"><i class="bi bi-check2 text-success fw-bold me-2"></i> AI tavsiyalar & Tahlil</li>
+              {% endfor %}
+            </ul>
+
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('user.buy_package', package_id=pkg.id) }}" class="btn btn-success fw-bold py-2 w-100">
+              <i class="bi bi-lightning-charge-fill me-1"></i> Xarid qilish (Click)
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success fw-bold py-2 w-100">
+              Ro'yxatdan o'tib xarid qilish
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5 bg-white">
+  <div class="container">
+    <div class="text-center max-w-700 mx-auto mb-5">
+      <span class="badge bg-success-subtle text-success px-3 py-1 mb-2">Savol-Javob</span>
+      <h3 class="fw-bold">Ko'p Beriladigan Savollar</h3>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="accordion" id="accordionFAQ">
+          <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header">
+              <button class="accordion-button fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                Ushbu platforma rasmiy davlat attestatsiyasi natijasini beradimi?
+              </button>
+            </h2>
+            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#accordionFAQ">
+              <div class="accordion-body text-muted small">
+                Yo'q. Ushbu platforma davlat attestatsiyasi emas, balki maktab o'qituvchilari uchun mustaqil onlayn tayyorlov tizimidir. Platformadagi natijalar va tayyorgarlik ko'rsatkichi rasmiy sertifikat beruvchi organ hisoblanmaydi.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                Qaysi fanlardan testlar mavjud?
+              </button>
+            </h2>
+            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#accordionFAQ">
+              <div class="accordion-body text-muted small">
+                Matematika, Informatika, Fizika, Kimyo, Biologiya, Tarix, Geografiya, Ona tili va adabiyoti, Ingliz tili, Rus tili, Psixologiya va boshqa barcha maktab pedagogik fanlari kiritilgan.
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                To'lov qanday amalga oshiriladi?
+              </button>
+            </h2>
+            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#accordionFAQ">
+              <div class="accordion-body text-muted small">
+                To'lovlar <strong>Click</strong> to'lov tizimi orqali avtomatlashtirilgan. To'lov tasdiqlangach, paket darhol hisobingizda faollashadi.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

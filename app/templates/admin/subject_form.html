@@ -1,0 +1,64 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}{% if subject %}Fanni Tahrirlash{% else %}Yangi Fan Qo'shish{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+  <h1 class="h2 fw-bold text-dark mb-0">{% if subject %}Fanni Tahrirlash: {{ subject.name }}{% else %}Yangi Fan Qo'shish{% endif %}</h1>
+  <a href="{{ url_for('admin.subjects_list') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Fanlar ro'yxatiga qaytish
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3 p-4 max-w-800">
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row g-3">
+      <div class="col-md-8">
+        <label class="form-label fw-bold">Fan nomi <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-control" required value="{{ subject.name if subject else '' }}" placeholder="Masalan: Matematika">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Slug (URL)</label>
+        <input type="text" name="slug" class="form-control" value="{{ subject.slug if subject else '' }}" placeholder="matematika">
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Yo'nalish (Kategoriya)</label>
+        <input type="text" name="category" class="form-control" value="{{ subject.category if subject else 'Maktab fani' }}" placeholder="Aniq fanlar">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold">Fan kodi</label>
+        <input type="text" name="code" class="form-control" value="{{ subject.code if subject else '' }}" placeholder="MATH-01">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold">O'quv yili</label>
+        <input type="text" name="academic_year" class="form-control" value="{{ subject.academic_year if subject else '2024-2025' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-bold">Tartib raqami</label>
+        <input type="number" name="order_num" class="form-control" value="{{ subject.order_num if subject else 0 }}">
+      </div>
+      <div class="col-md-6 d-flex align-items-center pt-4">
+        <div class="form-check form-switch fs-5">
+          <input class="form-check-input" type="checkbox" name="is_active" id="isActiveSwitch" {% if not subject or subject.is_active %}checked{% endif %}>
+          <label class="form-check-label fs-6 fw-bold" for="isActiveSwitch">Fanni faollashtirish</label>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label fw-bold">Tavsifi</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Fan haqida qisqacha tavsif">{{ subject.description if subject else '' }}</textarea>
+      </div>
+    </div>
+
+    <div class="mt-4 pt-3 border-top">
+      <button type="submit" class="btn btn-success fw-bold px-4 py-2">
+        <i class="bi bi-save me-1"></i> Saqlash
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

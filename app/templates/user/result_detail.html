@@ -1,147 +1,150 @@
 {% extends "base.html" %}
 
-{% block title %}Imtihon Natijasi - {{ site_name }}{% endblock %}
+{% block title %}Test Natijasi va Tahlili{% endblock %}
 
 {% block content %}
-<div class="bg-light py-4 border-bottom">
+<div class="bg-dark text-white py-5">
   <div class="container">
-    <h2 class="fw-bold text-dark mb-1">Attestatsiya Sinovi Natijasi</h2>
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb mb-0 small">
-        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Kabinet</a></li>
-        <li class="breadcrumb-item"><a href="{{ url_for('user.results_list') }}">Natijalar</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Tafsilotlar</li>
-      </ol>
-    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <span class="badge bg-success px-3 py-1 mb-2">Platformadagi Tayyorgarlik Natijasi</span>
+        <h1 class="fw-bold mb-1">{{ result.test.title if result.test else 'Attestatsiya Testi' }}</h1>
+        <p class="text-white-50 mb-0">TopsHirildi: {{ result.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+      </div>
+      <div>
+        <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-light fw-bold">
+          <i class="bi bi-speedometer2 me-1"></i> Dashboardga qaytish
+        </a>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-9">
-      
-      <!-- Result Banner Card -->
-      <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-5">
-        {% if result.is_passed %}
-        <div class="bg-success text-white p-5 text-center">
-          <i class="bi bi-patch-check-fill fs-1 d-block mb-3"></i>
-          <h2 class="fw-bold mb-1">MUVAFFAQIYATLI TOPSHIRILDI</h2>
-          <p class="lead opacity-75 mb-3">Tabriklaymiz! Siz belgilangan o'tish balini to'pladingiz.</p>
-          <div class="display-3 fw-bold">{{ result.percentage }}%</div>
-          <span class="badge bg-white text-success px-3 py-2 rounded-pill fw-bold mt-2">
-            To'plangan ball: {{ result.score }} ball
-          </span>
+<div class="container my-5">
+  <!-- Asosiy natija kartasi -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 bg-white">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-4 text-center border-end-lg">
+        <div class="display-3 fw-extrabold {% if result.is_passed %}text-success{% else %}text-danger{% endif %} mb-1">
+          {{ result.percentage }}%
         </div>
-        {% else %}
-        <div class="bg-danger text-white p-5 text-center">
-          <i class="bi bi-x-octagon-fill fs-1 d-block mb-3"></i>
-          <h2 class="fw-bold mb-1">IMTIHON TALABLARIGA JAVOB BERMADI</h2>
-          <p class="lead opacity-75 mb-3">Afsuski, to'plangan ball o'tish chegarasidan past bo'ldi.</p>
-          <div class="display-3 fw-bold">{{ result.percentage }}%</div>
-          <span class="badge bg-white text-danger px-3 py-2 rounded-pill fw-bold mt-2">
-            O'tish chegarasi: {{ result.attestation.passing_score }}% | Sizning balingiz: {{ result.score }}
-          </span>
+        <div class="h5 fw-bold text-dark mb-2">
+          {{ result.correct_answers }} / {{ result.total_questions }}
         </div>
-        {% endif %}
-
-        <div class="p-4 p-md-5 bg-white">
-          <h5 class="fw-bold text-dark mb-4">Attestatsiya sinovi ko'rsatkichlari</h5>
-          
-          <div class="row g-3 text-center mb-5">
-            <div class="col-md-3 col-6">
-              <div class="p-3 bg-light rounded-3 border">
-                <span class="text-muted small d-block">Jami savollar</span>
-                <h4 class="fw-bold text-dark mb-0">{{ result.total_questions }} ta</h4>
-              </div>
-            </div>
-            <div class="col-md-3 col-6">
-              <div class="p-3 bg-light rounded-3 border">
-                <span class="text-muted small d-block">To'g'ri javoblar</span>
-                <h4 class="fw-bold text-success mb-0">{{ result.correct_answers }} ta</h4>
-              </div>
-            </div>
-            <div class="col-md-3 col-6">
-              <div class="p-3 bg-light rounded-3 border">
-                <span class="text-muted small d-block">Noto'g'ri javoblar</span>
-                <h4 class="fw-bold text-danger mb-0">{{ result.incorrect_answers }} ta</h4>
-              </div>
-            </div>
-            <div class="col-md-3 col-6">
-              <div class="p-3 bg-light rounded-3 border">
-                <span class="text-muted small d-block">Ketgan vaqt</span>
-                <h4 class="fw-bold text-dark mb-0">{{ result.formatted_completion_time() }}</h4>
-              </div>
-            </div>
-          </div>
-
-          <!-- Topic Strengths / Weaknesses Analysis -->
-          {% if result.details %}
-          <h5 class="fw-bold text-dark mb-3"><i class="bi bi-bar-chart-line text-success me-2"></i> Mavzular va Yo'nalishlar Bo'yicha Tahlil</h5>
-          <div class="table-responsive mb-5">
-            <table class="table table-bordered align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Fan / Mavzu</th>
-                  <th class="text-center">Savollar</th>
-                  <th class="text-center">To'g'ri</th>
-                  <th>O'zlashtirish foizi</th>
-                  <th>Xulosa</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for d in result.details %}
-                <tr>
-                  <td>
-                    <strong>{{ d.subject.name if d.subject else 'Umumiy' }}</strong>
-                    {% if d.topic %}<span class="text-muted d-block small">{{ d.topic.name }}</span>{% endif %}
-                  </td>
-                  <td class="text-center">{{ d.total_topic_questions }}</td>
-                  <td class="text-center fw-bold text-success">{{ d.correct_topic_questions }}</td>
-                  <td style="width: 30%;">
-                    <div class="progress" style="height: 18px;">
-                      <div class="progress-bar {% if d.topic_percentage >= 70 %}bg-success{% elif d.topic_percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ d.topic_percentage }}%;">
-                        {{ d.topic_percentage }}%
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    {% if d.topic_percentage >= 70 %}
-                      <span class="badge bg-success">Yuqori</span>
-                    {% elif d.topic_percentage >= 50 %}
-                      <span class="badge bg-warning text-dark">O'rtacha</span>
-                    {% else %}
-                      <span class="badge bg-danger">Qo'shimcha tayyorgarlik talab etiladi</span>
-                    {% endif %}
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+        <span class="badge {% if result.is_passed %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} px-3 py-2 rounded-pill fs-6 fw-bold">
+          {% if result.is_passed %}
+            <i class="bi bi-check-circle-fill me-1"></i> Muvaffaqiyatli topshirildi
+          {% else %}
+            <i class="bi bi-exclamation-circle-fill me-1"></i> Qayta tayyorlanish tavsiya etiladi
           {% endif %}
-
-          <!-- Certificate Action -->
-          <div class="d-flex flex-wrap justify-content-between align-items-center pt-3 border-top gap-3">
-            <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-secondary">
-              <i class="bi bi-arrow-left me-1"></i> Bosh sahifaga qaytish
-            </a>
-
-            {% if result.is_passed and result.certificate %}
-            <div class="d-flex gap-2">
-              <a href="{{ url_for('public.verify_certificate', cert_no=result.certificate.verification_uuid) }}" target="_blank" class="btn btn-outline-success fw-bold">
-                <i class="bi bi-qr-code-scan me-1"></i> QR Verifikatsiya
-              </a>
-              <a href="/{{ result.certificate.pdf_path }}" target="_blank" class="btn btn-gov-primary fw-bold shadow-sm">
-                <i class="bi bi-file-earmark-pdf me-1"></i> Sertifikatni (PDF) yuklab olish
-              </a>
-            </div>
-            {% endif %}
-          </div>
-
-        </div>
+        </span>
       </div>
 
+      <div class="col-lg-8">
+        <div class="row g-3 text-center">
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 bg-light">
+              <span class="text-muted small d-block">To'g'ri javoblar</span>
+              <h3 class="fw-bold text-success mb-0">{{ result.correct_answers }} ta</h3>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 bg-light">
+              <span class="text-muted small d-block">Xato javoblar</span>
+              <h3 class="fw-bold text-danger mb-0">{{ result.incorrect_answers }} ta</h3>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 bg-light">
+              <span class="text-muted small d-block">Javobsiz</span>
+              <h3 class="fw-bold text-muted mb-0">{{ result.unanswered }} ta</h3>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 rounded-3 bg-light">
+              <span class="text-muted small d-block">Sarflangan vaqt</span>
+              <h3 class="fw-bold text-dark mb-0">{{ result.formatted_completion_time() }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- AI Tavsiyasi -->
+  {% if result.ai_recommendation %}
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-5 bg-success-subtle border-start border-4 border-success">
+    <div class="d-flex align-items-start gap-3">
+      <div class="bg-success text-white p-3 rounded-circle fs-4">
+        <i class="bi bi-cpu-fill"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold text-success mb-2">Sun'iy Intellekt (AI) Tahlili va Tavsiyasi</h5>
+        <p class="text-dark mb-0 leading-relaxed">{{ result.ai_recommendation }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Mavzular kesimidagi natija -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-5 bg-white">
+    <h4 class="fw-bold mb-4"><i class="bi bi-bar-chart-fill text-success me-2"></i> Mavzular Kesimidagi Natijalar</h4>
+    
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Mavzu</th>
+            <th>Savollar soni</th>
+            <th>To'g'ri</th>
+            <th style="width: 40%;">Aniqlik foizi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in result.details %}
+          <tr>
+            <td class="fw-semibold text-dark">{{ d.topic.name if d.topic else (d.subject.name if d.subject else 'Asosiy') }}</td>
+            <td>{{ d.total_topic_questions }} ta</td>
+            <td><strong class="text-success">{{ d.correct_topic_questions }}</strong> ta</td>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <div class="progress flex-grow-1" style="height: 10px;">
+                  <div class="progress-bar {% if d.topic_percentage >= 75 %}bg-success{% elif d.topic_percentage < 60 %}bg-danger{% else %}bg-warning{% endif %}" 
+                       role="progressbar" style="width: {{ d.topic_percentage }}%;"></div>
+                </div>
+                <span class="fw-bold {% if d.topic_percentage >= 75 %}text-success{% elif d.topic_percentage < 60 %}text-danger{% else %}text-warning{% endif %}">
+                  {{ d.topic_percentage }}%
+                </span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Boshqaruv Tugmalari -->
+  <div class="d-flex flex-wrap gap-3 justify-content-center">
+    <a href="{{ url_for('user.mistakes_view') }}" class="btn btn-outline-danger btn-lg fw-bold px-4">
+      <i class="bi bi-x-circle me-1"></i> Xatolarni ko'rish
+    </a>
+    {% if result.test %}
+    <form method="POST" action="{{ url_for('user.start_test', test_id=result.test.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-success btn-lg fw-bold px-4">
+        <i class="bi bi-arrow-repeat me-1"></i> Qayta ishlash
+      </button>
+    </form>
+    {% endif %}
+    {% if result.test and result.test.subject_id %}
+    <a href="{{ url_for('user.subject_tests', subject_id=result.test.subject_id) }}" class="btn btn-outline-success btn-lg fw-bold px-4">
+      <i class="bi bi-collection me-1"></i> Shu fandan testlar
+    </a>
+    {% endif %}
+    <a href="{{ url_for('user.dashboard') }}" class="btn btn-dark btn-lg fw-bold px-4">
+      <i class="bi bi-speedometer2 me-1"></i> Dashboard
+    </a>
   </div>
 </div>
 {% endblock %}

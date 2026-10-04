@@ -14,25 +14,21 @@ class TestSession(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     test_id = db.Column(db.Integer, db.ForeignKey('tests.id', ondelete='CASCADE'), nullable=False, index=True)
-    registration_id = db.Column(db.Integer, db.ForeignKey('attestation_registrations.id', ondelete='CASCADE'), nullable=False, index=True)
 
     started_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=False, index=True)
     finished_at = db.Column(db.DateTime, nullable=True)
     
     status = db.Column(db.String(20), default=SessionStatus.IN_PROGRESS, index=True)
-    ip_address = db.Column(db.String(45), nullable=False)
-    user_agent = db.Column(db.Text, nullable=False)
-    device_fingerprint = db.Column(db.String(128), nullable=True)
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.Text, nullable=True)
     last_heartbeat_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Aloqalar
     user = db.relationship('User', back_populates='sessions')
     test = db.relationship('Test', back_populates='sessions')
-    registration = db.relationship('AttestationRegistration', back_populates='sessions')
     answers = db.relationship('TestAnswer', back_populates='session', cascade='all, delete-orphan')
     result = db.relationship('Result', back_populates='session', uselist=False, cascade='all, delete-orphan')
-    proctoring_events = db.relationship('ProctoringEvent', back_populates='session', cascade='all, delete-orphan')
 
     @property
     def remaining_seconds(self):
@@ -52,7 +48,7 @@ class TestAnswer(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     session_id = db.Column(db.String(36), db.ForeignKey('test_sessions.id', ondelete='CASCADE'), nullable=False, index=True)
-    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False, index=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False, index=True)
     
     selected_option_ids = db.Column(db.JSON, nullable=True)
     text_answer = db.Column(db.Text, nullable=True)
@@ -65,18 +61,3 @@ class TestAnswer(db.Model):
 
     session = db.relationship('TestSession', back_populates='answers')
     question = db.relationship('Question')
-
-class ProctoringEvent(db.Model):
-    __tablename__ = 'proctoring_events'
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    session_id = db.Column(db.String(36), db.ForeignKey('test_sessions.id', ondelete='CASCADE'), nullable=False, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    
-    event_type = db.Column(db.String(50), nullable=False)
-    severity = db.Column(db.String(20), default='LOW')
-    details = db.Column(db.JSON, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    session = db.relationship('TestSession', back_populates='proctoring_events')
-    user = db.relationship('User')

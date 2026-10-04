@@ -2,7 +2,7 @@
 
 {% block title %}Savollar Banki{% endblock %}
 
-{% block admin_content %}
+{% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
   <div>
     <h1 class="h3 fw-bold text-dark mb-0">Savollar Banki</h1>
@@ -18,110 +18,147 @@
     <a href="{{ url_for('admin.import_ai') }}" class="btn btn-outline-warning btn-sm fw-bold text-dark">
       <i class="bi bi-robot me-1"></i> AI Import
     </a>
-    <a href="{{ url_for('admin.create_question') }}" class="btn btn-gov-primary btn-sm fw-bold">
+    <a href="{{ url_for('admin.question_create') }}" class="btn btn-success btn-sm fw-bold">
       <i class="bi bi-plus-lg me-1"></i> Savol qo'shish
     </a>
   </div>
 </div>
 
 <!-- Filters -->
-<div class="card border rounded-3 p-3 bg-white shadow-sm mb-4">
+<div class="card border-0 shadow-sm p-3 bg-white mb-4 rounded-3">
   <form method="GET" action="{{ url_for('admin.questions_list') }}" class="row g-2 align-items-center">
-    <div class="col-md-4">
-      <input type="text" name="q" class="form-control form-control-sm" placeholder="Savol matni bo'yicha qidiruv..." value="{{ q_search or '' }}">
+    <div class="col-md-3">
+      <input type="text" name="q" class="form-control form-control-sm" placeholder="Savol matni bo'yicha qidiruv..." value="{{ q or '' }}">
     </div>
     <div class="col-md-3">
       <select name="subject_id" class="form-select form-select-sm">
         <option value="">Barcha fanlar</option>
         {% for s in subjects %}
-        <option value="{{ s.id }}" {% if current_subj == s.id|string %}selected{% endif %}>{{ s.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-2">
-      <select name="type" class="form-select form-select-sm">
-        <option value="">Barcha turlar</option>
-        {% for t_val, t_label in question_types %}
-        <option value="{{ t_val }}" {% if current_type == t_val %}selected{% endif %}>{{ t_label }}</option>
+        <option value="{{ s.id }}" {% if current_subject_id == s.id|string %}selected{% endif %}>{{ s.name }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="col-md-2">
       <select name="difficulty" class="form-select form-select-sm">
         <option value="">Barcha qiyinlik</option>
-        {% for d_val, d_label in diff_choices %}
-        <option value="{{ d_val }}" {% if current_diff == d_val %}selected{% endif %}>{{ d_label }}</option>
-        {% endfor %}
+        <option value="EASY" {% if current_difficulty == 'EASY' %}selected{% endif %}>Oson</option>
+        <option value="MEDIUM" {% if current_difficulty == 'MEDIUM' %}selected{% endif %}>O'rta</option>
+        <option value="HARD" {% if current_difficulty == 'HARD' %}selected{% endif %}>Qiyin</option>
       </select>
     </div>
-    <div class="col-md-1">
-      <button type="submit" class="btn btn-gov-primary btn-sm w-100">Filtr</button>
+    <div class="col-md-2">
+      <select name="status" class="form-select form-select-sm">
+        <option value="">Barcha holatlar</option>
+        <option value="ACTIVE">Faol</option>
+        <option value="INACTIVE">Nofaol</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+        <i class="bi bi-filter"></i> Filtrlash
+      </button>
     </div>
   </form>
 </div>
 
-<!-- Questions Table -->
-<div class="card border rounded-3 bg-white shadow-sm overflow-hidden">
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light small">
-        <tr>
-          <th>#ID</th>
-          <th>Savol matni</th>
-          <th>Fan / Mavzu</th>
-          <th>Savol turi</th>
-          <th>Qiyinlik</th>
-          <th>Variantlar</th>
-          <th>Holat</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for q in questions %}
-        <tr>
-          <td class="font-monospace small text-muted">#{{ q.id }}</td>
-          <td style="max-width: 400px;">
-            <strong class="d-block text-dark">{{ q.text[:120] }}{% if q.text|length > 120 %}...{% endif %}</strong>
-            {% if q.explanation %}
-            <span class="text-muted small">Izoh: {{ q.explanation[:60] }}...</span>
+<!-- Ommaviy amallar va jadval -->
+<form method="POST" action="{{ url_for('admin.questions_batch_action') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="card border-0 shadow-sm bg-white rounded-3 mb-3">
+    <div class="card-header bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <span class="small fw-bold text-muted">Ommaviy amal:</span>
+        <select name="batch_action" class="form-select form-select-sm d-inline-block w-auto">
+          <option value="activate">Faollashtirish</option>
+          <option value="deactivate">Nofaol qilish</option>
+          <option value="delete">O'chirish</option>
+        </select>
+        <button type="submit" class="btn btn-sm btn-dark fw-bold" onclick="return confirm('Tanlangan savollar ustida amal bajarilsinmi?')">
+          Bajarish
+        </button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light small">
+          <tr>
+            <th style="width: 40px;">
+              <input type="checkbox" class="form-check-input" id="selectAllCheckbox" onclick="toggleAllCheckboxes(this)">
+            </th>
+            <th>ID</th>
+            <th>Savol matni</th>
+            <th>Fan / Mavzu</th>
+            <th>Qiyinlik</th>
+            <th>Versiya</th>
+            <th>Holat</th>
+            <th>Amallar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in questions %}
+          <tr>
+            <td>
+              <input type="checkbox" name="question_ids[]" value="{{ q.id }}" class="form-check-input question-select-chk">
+            </td>
+            <td class="font-monospace small text-muted">#{{ q.id }}</td>
+            <td style="max-width: 420px;">
+              <strong class="d-block text-dark">{{ q.text[:120] }}{% if q.text|length > 120 %}...{% endif %}</strong>
+              <span class="text-muted small">Variantlar: {{ q.options|length }} ta</span>
+            </td>
+            <td class="small">
+              <span class="fw-semibold d-block text-dark">{{ q.subject.name if q.subject else '-' }}</span>
+              <span class="text-muted">{{ q.topic.name if q.topic else '-' }}</span>
+            </td>
+            <td>
+              {% if q.difficulty == 'EASY' %}<span class="badge bg-success">Oson</span>
+              {% elif q.difficulty == 'HARD' %}<span class="badge bg-danger">Qiyin</span>
+              {% else %}<span class="badge bg-warning text-dark">O'rta</span>{% endif %}
+            </td>
+            <td><span class="badge bg-secondary">v{{ q.version }}</span></td>
+            <td>
+              <span class="badge {% if q.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %}">
+                {{ q.status }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('admin.question_edit', id=q.id) }}" class="btn btn-sm btn-outline-primary" title="Tahrirlash">
+                <i class="bi bi-pencil-fill"></i>
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-4">Savollar topilmadi</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="card-footer bg-white py-3">
+      <nav>
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+          {% for p in pagination.iter_pages() %}
+            {% if p %}
+              <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.questions_list', page=p, q=q, subject_id=current_subject_id, difficulty=current_difficulty) }}">{{ p }}</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">...</span></li>
             {% endif %}
-          </td>
-          <td class="small">
-            <span class="fw-semibold d-block">{{ q.subject.name if q.subject else '-' }}</span>
-            <span class="text-muted">{{ q.topic.name if q.topic else '-' }}</span>
-          </td>
-          <td>
-            <span class="badge bg-light text-dark border small">{{ q.question_type }}</span>
-          </td>
-          <td>
-            {% if q.difficulty == 'EASY' %}<span class="badge bg-success">Oson</span>
-            {% elif q.difficulty == 'HARD' %}<span class="badge bg-danger">Qiyin</span>
-            {% else %}<span class="badge bg-warning text-dark">O'rta</span>{% endif %}
-          </td>
-          <td class="small">
-            {{ q.options|length }} ta
-            {% for opt in q.options %}
-              {% if opt.is_correct %}
-              <span class="text-success fw-bold d-block">✓ {{ opt.option_key }}) {{ opt.text[:25] }}</span>
-              {% endif %}
-            {% endfor %}
-          </td>
-          <td>
-            <span class="badge bg-success">{{ q.status }}</span>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="7" class="text-center py-5 text-muted">
-            <i class="bi bi-folder2-open fs-1 d-block mb-2"></i>
-            Bu bo'limda hozircha savollar mavjud emas.
-            <div class="mt-3">
-              <a href="{{ url_for('admin.create_question') }}" class="btn btn-gov-primary btn-sm">Savol qo'shish</a>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
   </div>
-</div>
+</form>
+
+<script>
+function toggleAllCheckboxes(source) {
+  document.querySelectorAll('.question-select-chk').forEach(c => c.checked = source.checked);
+}
+</script>
 {% endblock %}

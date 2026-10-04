@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Zaif Mavzular - Attestatsiyaga Tayyorlov{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h1 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Zaif Mavzular</h1>
+        <p class="text-white-50 mb-0">Aniqlik ko'rsatkichi 60% dan past bo'lgan, qayta o'qish va ishlash tavsiya etiladigan mavzular.</p>
+      </div>
+      <div>
+        {% if weak_topics %}
+        <form method="POST" action="{{ url_for('user.create_weak_topics_test') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-warning text-dark btn-lg fw-bold shadow">
+            <i class="bi bi-play-circle-fill me-1"></i> Zaif mavzulardan test yaratish
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container my-5">
+  {% if weak_topics %}
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Mavzu nomi</th>
+            <th>Tegishli fan</th>
+            <th>Jami ishlangan</th>
+            <th>To'g'ri ishlangan</th>
+            <th>Aniqlik ko'rsatkichi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for wt in weak_topics %}
+          <tr>
+            <td>
+              <div class="fw-bold text-dark">{{ wt.topic_name }}</div>
+            </td>
+            <td><span class="badge bg-secondary-subtle text-secondary">{{ wt.subject_name }}</span></td>
+            <td>{{ wt.total_answered }} ta savol</td>
+            <td>{{ wt.correct_answered }} ta</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height: 8px;">
+                  <div class="progress-bar bg-danger" role="progressbar" style="width: {{ wt.accuracy }}%;"></div>
+                </div>
+                <span class="badge bg-danger-subtle text-danger fw-bold fs-6">{{ wt.accuracy }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div class="p-4 bg-success-subtle text-success rounded-circle d-inline-block mb-3">
+      <i class="bi bi-shield-check display-4"></i>
+    </div>
+    <h3 class="fw-bold">Zaif mavzular aniqlanmadi!</h3>
+    <p class="text-muted">Barcha ishlangan mavzular bo'yicha ko'rsatkichlaringiz 60% dan yuqori.</p>
+    <a href="{{ url_for('user.tests_catalog') }}" class="btn btn-success fw-bold px-4 py-2">
+      Testlarni davom ettirish
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

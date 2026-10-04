@@ -1,6 +1,8 @@
 import re
 import json
-from app.models.question import QuestionType, DifficultyLevel
+from flask import current_app
+from app.models.question import QuestionType, DifficultyLevel, Question, Topic
+from app.models.result import Result, ResultDetail, UserTopicStat
 
 class AIService:
     @staticmethod
@@ -54,7 +56,6 @@ class AIService:
 
         # Agar regex orqali kam savol topilsa, paragraflar bo'yicha tahlil
         if not questions and len(lines) >= 3:
-            # Soddalashtirilgan tahlil
             questions.append({
                 'text': lines[0],
                 'subject': 'Umumiy',
@@ -75,3 +76,53 @@ class AIService:
             'extracted_count': len(questions),
             'questions': questions
         }
+
+    @staticmethod
+    def generate_recommendations(user_id: int, result_id: int = None) -> str:
+        """
+        O'qituvchining test natijalari asosida shaxsiy AI tavsiyasi shakllantirish.
+        Bu tavsiya rasmiy davlat attestatsiyasi natijasi emas, balki platformadagi ichki tayyorgarlik tahlili hisoblanadi.
+        """
+        # Natija ma'lumotlarini olish
+        result = Result.query.get(result_id) if result_id else None
+        
+        details = result.details if result else []
+        strong_topics = []
+        weak_topics = []
+
+        for d in details:
+            topic_name = d.topic.name if d.topic else (d.subject.name if d.subject else "Mavzu")
+            perc = float(d.topic_percentage)
+            if perc >= 75.0:
+                strong_topics.append(f"{topic_name} ({perc:.0f}%)")
+            elif perc < 60.0:
+                weak_topics.append(f"{topic_name} ({perc:.0f}%)")
+
+        # Tavsiya matnini shakllantirish
+        recommendation_parts = []
+
+        if result:
+            score_perc = float(result.percentage)
+            recommendation_parts.append(
+                f"Platformadagi ushbu test natijangiz: {score_perc:.1f}%. "
+                f"To'g'ri javoblar: {result.correct_answers}/{result.total_questions}."
+            )
+
+        if strong_topics:
+            strong_str = ", ".join(strong_topics[:3])
+            recommendation_parts.append(f"Siz {strong_str} mavzulari bo'yicha yuqori bilim darajasini ko'rsatmoqdasiz.")
+
+        if weak_topics:
+            weak_str = ", ".join(weak_topics[:3])
+            recommendation_parts.append(
+                f"Biroq {weak_str} bo'yicha natijalaringiz pastroq bo'ldi. "
+                f"Keyingi mashg'ulotlarda ushbu mavzularga oid testlarni alohida ishlab chiqish tavsiya etiladi."
+            )
+        else:
+            recommendation_parts.append("Barcha mavzular bo'yicha barqaror natija ko'rsatildi. Tayyorgarlikni yanada mustahkamlash uchun qiyin darajadagi savollarni ishlashingiz mumkin.")
+
+        recommendation_parts.append(
+            "Eslatma: Ushbu tahlil platformaning ichki tayyorgarlik ko'rsatkichi bo'lib, rasmiy davlat attestatsiyasi natijasi hisoblanmaydi."
+        )
+
+        return " ".join(recommendation_parts)

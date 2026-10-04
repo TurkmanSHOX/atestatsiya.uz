@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}{{ subject.name }} - Attestatsiya Tayyorgarligi{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-5">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb text-white-50 small mb-3">
+        <li class="breadcrumb-item"><a href="{{ url_for('public.index') }}" class="text-white-50 text-decoration-none">Bosh sahifa</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('public.subjects') }}" class="text-white-50 text-decoration-none">Fanlar</a></li>
+        <li class="breadcrumb-item active text-white" aria-current="page">{{ subject.name }}</li>
+      </ol>
+    </nav>
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <span class="badge bg-success px-3 py-1 mb-2">{{ subject.category }}</span>
+        <h1 class="fw-bold mb-2">{{ subject.name }}</h1>
+        <p class="text-white-50 mb-0">{{ subject.description or "Ushbu fan bo'yicha attestatsiya dasturida mavjud bo'lgan barcha mavzular va simulyatsiya testlari." }}</p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+        {% if current_user.is_authenticated %}
+        <form method="POST" action="{{ url_for('user.start_simulation', subject_id=subject.id) }}" class="d-inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-success btn-lg fw-bold shadow">
+            <i class="bi bi-play-circle-fill me-1"></i> Simulyatsiyani boshlash (50 Q)
+          </button>
+        </form>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-success btn-lg fw-bold shadow">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Kirish va test ishlash
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container my-5">
+  <div class="row g-4">
+    <!-- Chap: Bo'limlar va Mavzular -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h4 class="fw-bold mb-4"><i class="bi bi-diagram-3-fill text-success me-2"></i> Fan Tuzilmasi va Mavzular</h4>
+
+        {% if subject.sections %}
+          {% for sec in subject.sections %}
+          <div class="mb-4">
+            <h6 class="fw-bold text-dark bg-light p-3 rounded-3 mb-3 border-start border-4 border-success">
+              {{ sec.name }}
+            </h6>
+            <div class="list-group list-group-flush ms-3">
+              {% for top in sec.topics %}
+              <div class="list-group-item d-flex justify-content-between align-items-center border-0 py-2">
+                <div>
+                  <i class="bi bi-dot text-success fs-4"></i>
+                  <span class="fw-semibold">{{ top.name }}</span>
+                </div>
+                <span class="badge bg-secondary-subtle text-secondary">{{ top.questions|length }} ta savol</span>
+              </div>
+              {% else %}
+              <div class="text-muted small ms-3">Ushbu bo'limda mavzular tez orada qo'shiladi.</div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="list-group list-group-flush">
+            {% for top in subject.topics %}
+            <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <div>
+                <i class="bi bi-journal-bookmark text-success me-2"></i>
+                <span class="fw-semibold">{{ top.name }}</span>
+              </div>
+              <span class="badge bg-secondary-subtle text-secondary">{{ top.questions|length }} ta savol</span>
+            </div>
+            {% else %}
+            <div class="text-muted text-center py-4">Hozircha mavzular kiritilmagan.</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- O'ng: Tezkor Statistikalar va Paket -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
+        <h5 class="fw-bold mb-3">Fan Ma'lumotlari</h5>
+        <ul class="list-unstyled small mb-4">
+          <li class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-muted">Jami mavzular:</span>
+            <strong>{{ subject.topics|length }} ta</strong>
+          </li>
+          <li class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-muted">Jami savollar:</span>
+            <strong>{{ subject.questions|length }} ta</strong>
+          </li>
+          <li class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-muted">O'quv yili:</span>
+            <strong>{{ subject.academic_year }}</strong>
+          </li>
+          <li class="d-flex justify-content-between py-2">
+            <span class="text-muted">Simulyatsiya vaqti:</span>
+            <strong>90 daqiqa (50 ta savol)</strong>
+          </li>
+        </ul>
+
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('user.subject_tests', subject_id=subject.id) }}" class="btn btn-success fw-bold w-100 py-2">
+          <i class="bi bi-play-circle me-1"></i> Fan Testlariga O'tish
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success fw-bold w-100 py-2">
+          Ro'yxatdan o'tib test ishlash
+        </a>
+        {% endif %}
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-success text-white">
+        <i class="bi bi-lightning-charge fs-1 mb-2"></i>
+        <h5 class="fw-bold">Tayyorgarlik Paketi Kerakmi?</h5>
+        <p class="small text-white-50 mb-3">Barcha fanlar, AI tavsiyalar va cheksiz testlar uchun qulay paketni faollashtiring.</p>
+        <a href="{{ url_for('public.packages') }}" class="btn btn-light text-success fw-bold w-100">
+          Paketlarni ko'rish
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

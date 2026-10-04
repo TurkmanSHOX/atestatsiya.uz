@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Tayyorgarlik Paketlari va Narxlar{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-5 text-center">
+  <div class="container max-w-700">
+    <span class="badge bg-success px-3 py-1 mb-2">Hamyonbop va Shaffof</span>
+    <h1 class="fw-bold mb-3">Tayyorgarlik Paketlari</h1>
+    <p class="text-white-50 mb-0">Maktab o'qituvchilari uchun hamyonbop obunalar. To'lovlar Click orqali avtomatik qabul qilinadi.</p>
+  </div>
+</div>
+
+<div class="container my-5">
+  <div class="row g-4 justify-content-center">
+    {% for pkg in packages %}
+    <div class="col-lg-4 col-md-6">
+      <div class="card h-100 border-0 shadow rounded-4 p-4 {% if loop.index == 2 %}border border-2 border-success position-relative{% endif %}">
+        {% if loop.index == 2 %}
+        <span class="position-absolute top-0 start-50 translate-middle badge bg-success px-3 py-2 rounded-pill">
+          Eng ommabop
+        </span>
+        {% endif %}
+
+        <div class="card-body d-flex flex-column text-center">
+          <h4 class="fw-bold text-dark mb-2">{{ pkg.name }}</h4>
+          <p class="text-muted small mb-4">{{ pkg.description or "Imtihon oldidan bilimlarni tizimli sinash uchun mo'ljallangan." }}</p>
+
+          <div class="my-3">
+            <span class="display-5 fw-extrabold text-success">{{ pkg.formatted_price() }}</span>
+            <span class="text-muted small d-block">/ {{ pkg.duration_days }} kun amal qiladi</span>
+          </div>
+
+          <ul class="list-unstyled text-start small my-4 flex-grow-1">
+            {% for f in pkg.features %}
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> {{ f }}</li>
+            {% else %}
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Barcha 26+ maktab fanlari</li>
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Attestatsiya simulyatsiyalari</li>
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Xatolar ustida ishlash moduli</li>
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Zaif mavzular tahlili & AI tavsiya</li>
+            {% endfor %}
+          </ul>
+
+          {% if current_user.is_authenticated %}
+          <a href="{{ url_for('user.buy_package', package_id=pkg.id) }}" class="btn btn-success btn-lg fw-bold py-3 w-100 shadow-sm">
+            <i class="bi bi-lightning-charge-fill me-1"></i> Xarid qilish (Click)
+          </a>
+          {% else %}
+          <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success btn-lg fw-bold py-3 w-100">
+            Ro'yxatdan o'tib xarid qilish
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card border-0 bg-light p-4 rounded-4 mt-5 text-center max-w-800 mx-auto">
+    <h5 class="fw-bold"><i class="bi bi-shield-check text-success me-2"></i> Xavfsiz To'lov Kafolati</h5>
+    <p class="text-muted small mb-0">Barcha to'lovlar rasmiy <strong>Click</strong> to'lov tizimining xavfsiz shlyuzi orqali qabul qilinadi. To'lov tasdiqlangach, paket darhol profilingizda faollashadi va Telegram orqali xabar yuboriladi.</p>
+  </div>
+</div>
+{% endblock %}

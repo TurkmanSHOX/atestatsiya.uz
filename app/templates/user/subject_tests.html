@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{{ subject.name }} - Testlar{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-5">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb text-white-50 small mb-3">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}" class="text-white-50 text-decoration-none">Kabinet</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('user.tests_catalog') }}" class="text-white-50 text-decoration-none">Testlar</a></li>
+        <li class="breadcrumb-item active text-white" aria-current="page">{{ subject.name }}</li>
+      </ol>
+    </nav>
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <span class="badge bg-success px-3 py-1 mb-2">{{ subject.category }}</span>
+        <h1 class="fw-bold mb-2">{{ subject.name }} — Tayyorgarlik Testlari</h1>
+        <p class="text-white-50 mb-0">Mavzular bo'yicha mustaqil test topshiring yoki 50 talik to'liq simulyatsiyani bajaring.</p>
+      </div>
+      <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+        <form method="POST" action="{{ url_for('user.start_simulation', subject_id=subject.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-success btn-lg fw-bold shadow">
+            <i class="bi bi-play-circle-fill me-1"></i> 50 talik Simulyatsiya
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container my-5">
+  <div class="row g-4">
+    <!-- Mavzular ro'yxati -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h4 class="fw-bold mb-4"><i class="bi bi-journal-text text-success me-2"></i> Mavzular Bo'yicha Testlar</h4>
+
+        <div class="list-group list-group-flush">
+          {% for t in topics %}
+          {% set stat = topic_stats.get(t.id) %}
+          <div class="list-group-item d-flex justify-content-between align-items-center py-3 px-2 border-bottom">
+            <div class="me-3">
+              <h6 class="fw-bold text-dark mb-1">{{ t.name }}</h6>
+              <div class="text-muted small">
+                Savollar: {{ t.questions|length }} ta
+                {% if stat %}
+                  | Aniqlik: <span class="fw-bold {% if stat.accuracy_percentage >= 70 %}text-success{% elif stat.accuracy_percentage < 60 %}text-danger{% else %}text-warning{% endif %}">{{ stat.accuracy_percentage }}%</span>
+                {% else %}
+                  | <span class="text-muted">Hali ishlanmagan</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div>
+              {% set topic_test = tests|selectattr("topic_id", "equalto", t.id)|first %}
+              {% if topic_test %}
+              <form method="POST" action="{{ url_for('user.start_test', test_id=topic_test.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-success fw-bold px-3">
+                  <i class="bi bi-play-fill"></i> Test boshlash
+                </button>
+              </form>
+              {% else %}
+              <button class="btn btn-sm btn-secondary disabled" title="Savollar yetarli emas">
+                Tez orada
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted">Ushbu fanda mavzular kiritilmagan.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- O'ng panel: Simulyatsiya va Tavsiya -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
+        <h5 class="fw-bold mb-3">Imtihon Formati</h5>
+        <ul class="list-unstyled small mb-4">
+          <li class="py-2 border-bottom d-flex justify-content-between">
+            <span class="text-muted">Savollar soni:</span>
+            <strong>50 ta savol</strong>
+          </li>
+          <li class="py-2 border-bottom d-flex justify-content-between">
+            <span class="text-muted">Vaqt:</span>
+            <strong>90 daqiqa</strong>
+          </li>
+          <li class="py-2 border-bottom d-flex justify-content-between">
+            <span class="text-muted">Qiyinlik:</span>
+            <span>20 Oson | 20 O'rta | 10 Qiyin</span>
+          </li>
+          <li class="py-2 d-flex justify-content-between">
+            <span class="text-muted">O'tish bali:</span>
+            <strong>60%</strong>
+          </li>
+        </ul>
+
+        <form method="POST" action="{{ url_for('user.start_simulation', subject_id=subject.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-success fw-bold w-100 py-3 shadow-sm">
+            <i class="bi bi-play-circle-fill me-1"></i> Simulyatsiyani Boshlash
+          </button>
+        </form>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center">
+        <div class="p-3 bg-danger-subtle text-danger rounded-circle mx-auto mb-2" style="width: 50px; height: 50px;">
+          <i class="bi bi-x-circle-fill fs-4"></i>
+        </div>
+        <h6 class="fw-bold">Xatolaringiz Bormi?</h6>
+        <p class="text-muted small mb-3">Ushbu fan bo'yicha ilgari xato qilgan savollaringizni alohida qayta ishlab chiqing.</p>
+        <form method="POST" action="{{ url_for('user.create_mistakes_test') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-danger btn-sm fw-bold w-100">
+            Xatolardan test yaratish
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

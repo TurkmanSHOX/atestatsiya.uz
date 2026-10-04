@@ -1,0 +1,124 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}AI Import Preview - Admin Paneli{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-0"><i class="bi bi-robot text-primary me-2"></i> AI / Matn Tahlili Xulosasi (Preview)</h1>
+    <span class="text-muted small">Erkin matndan sun'iy intellekt orqali ajratilgan savollar</span>
+  </div>
+  <a href="{{ url_for('admin.import_ai') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Qayta tahlil qilish
+  </a>
+</div>
+
+{% if not result.success or not result.questions %}
+<div class="alert alert-warning py-3">
+  <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i> Savollar topilmadi</h6>
+  <p class="mb-0">Kiritilgan matnda savol strukturasi aniqlanmadi. Iltimos, matn formatini tekshirib qayta urinib ko'ring.</p>
+</div>
+{% else %}
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm">
+      <div class="text-muted small">Ajratilgan savollar soni</div>
+      <div class="h3 fw-bold text-primary mb-0">{{ result.total }} ta</div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border rounded-3 p-3 bg-white shadow-sm">
+      <div class="text-muted small">AI ishonch darajasi (Confidence)</div>
+      <div class="h3 fw-bold text-success mb-0">{{ (result.confidence_avg * 100)|round|int }}%</div>
+    </div>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('admin.import_confirm') }}" class="card border rounded-3 p-4 bg-white shadow-sm mb-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="questions_json" value='{{ result.questions | tojson }}'>
+
+  <h5 class="fw-bold text-dark mb-3">Savollarni biriktirish</h5>
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <label class="form-label small fw-bold">Ushbu savollar qaysi fanga tegishli? <span class="text-danger">*</span></label>
+      <select name="default_subject_id" class="form-select" required>
+        <option value="">Fanni tanlang...</option>
+        {% for s in subjects %}
+        <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label small fw-bold">Mavzu (ixtiyoriy)</label>
+      <select name="default_topic_id" class="form-select">
+        <option value="">Umumiy bo'limga biriktirish</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center border-top pt-3">
+    <span class="text-muted small">
+      <i class="bi bi-shield-check me-1 text-success"></i> Savollar bazaga saqlanishidan oldin dublikatlar avtomatik filtrlanadi.
+    </span>
+    <button type="submit" class="btn btn-success fw-bold px-4">
+      <i class="bi bi-check2-circle me-1"></i> Barcha {{ result.questions|length }} ta savolni tasdiqlash va saqlash
+    </button>
+  </div>
+</form>
+
+<div class="card border rounded-3 bg-white shadow-sm overflow-hidden mb-5">
+  <div class="card-header bg-light py-3">
+    <h6 class="fw-bold text-dark mb-0">AI ajratgan savollar</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th>Savol matni va aniqlangan variantlar</th>
+          <th>To'g'ri javob</th>
+          <th>AI ishonch</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in result.questions %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>
+            <div class="fw-bold text-dark mb-2">{{ q.text }}</div>
+            <div class="row g-1">
+              {% for opt in q.options %}
+              <div class="col-md-6">
+                <span class="badge {% if opt.is_correct %}bg-success{% else %}bg-light text-dark border{% endif %} me-1">
+                  {{ opt.key }}
+                </span>
+                <span class="{% if opt.is_correct %}fw-bold text-success{% endif %}">{{ opt.text }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </td>
+          <td>
+            {% for opt in q.options %}
+              {% if opt.is_correct %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                  Variant {{ opt.key }}
+                </span>
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td>
+            <span class="badge bg-info-subtle text-info border border-info-subtle">
+              {{ (q.ai_confidence * 100)|round|int if q.ai_confidence else 95 }}%
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}

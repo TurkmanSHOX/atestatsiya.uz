@@ -1,11 +1,13 @@
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_user
 from app.models.user import User
-from app.models.attestation import Attestation
+from app.models.question import Subject, Topic, Question
+from app.models.test import Test
 from app.models.session import TestSession
+from app.models.result import Result
+from app.models.system import Notification
 from app.services.test_engine_service import TestEngineService
-from app.services.proctoring_service import ProctoringService
-from app.services.certificate_service import CertificateService
+from app.services.payment_service import PaymentService
 
 api_bp = Blueprint('api', __name__)
 
@@ -23,10 +25,30 @@ def api_login():
         return jsonify({'success': True, 'user': user.to_dict()})
     return jsonify({'success': False, 'message': "Noto'g'ri login yoki parol"}), 401
 
-@api_bp.route('/attestations', methods=['GET'])
-def api_attestations():
-    attestations = Attestation.query.filter_by(status='ACTIVE').all()
-    return jsonify({'success': True, 'data': [a.to_dict() for a in attestations]})
+@api_bp.route('/subjects', methods=['GET'])
+def api_subjects():
+    subjects = Subject.query.filter_by(is_active=True).order_by(Subject.order_num).all()
+    return jsonify({'success': True, 'data': [s.to_dict() for s in subjects]})
+
+@api_bp.route('/topics', methods=['GET'])
+def api_topics():
+    subject_id = request.args.get('subject_id')
+    query = Topic.query.filter_by(is_active=True)
+    if subject_id:
+        query = query.filter_by(subject_id=subject_id)
+    topics = query.order_by(Topic.order_num).all()
+    return jsonify({'success': True, 'data': [t.to_dict() for t in topics]})
+
+@api_bp.route('/tests', methods=['GET'])
+def api_tests():
+    subject_id = request.args.get('subject_id')
+    query = Test.query.filter_by(status='ACTIVE')
+    if subject_id:
+        query = query.filter_by(subject_id=subject_id)
+    tests = query.all()
+    return jsonify({'success': True, 'data': [t.to_dict() for t in tests]})
+
+# ==================== TEST ISHLASH JARAYONI ====================
 
 @api_bp.route('/exam/session/<session_id>', methods=['GET'])
 def api_exam_session(session_id):
@@ -71,29 +93,51 @@ def api_finish_exam(session_id):
     result = TestEngineService.finish_session(session_id, auto_expire=False)
     if not result:
         return jsonify({'success': False, 'message': "Xatolik yuz berdi"}), 400
-    return jsonify({'success': True, 'result_id': result.id, 'percentage': float(result.percentage), 'is_passed': result.is_passed})
+    return jsonify({
+        'success': True,
+        'result_id': result.id,
+        'percentage': float(result.percentage),
+        'is_passed': result.is_passed,
+        'score': float(result.score)
+    })
 
-@api_bp.route('/exam/session/<session_id>/security-event', methods=['POST'])
-def api_security_event(session_id):
-    data = request.get_json() or {}
-    event_type = data.get('event_type', 'UNKNOWN')
-    severity = data.get('severity', 'LOW')
-    details = data.get('details', {})
+# ==================== CLICK TO'LOV CALLBACKLARI ====================
 
-    session = TestSession.query.get(session_id)
-    if not session:
-        return jsonify({'success': False, 'message': "Sessiya topilmadi"}), 404
+@api_bp.route('/payments/click/prepare', methods=['POST'])
+def click_prepare():
+    data = request.form.to_dict() if request.form else (request.get_json() or {})
+    response_data = PaymentService.handle_click_prepare(data, ip_address=request.remote_addr)
+    return jsonify(response_data)
 
-    ev = ProctoringService.log_event(
-        session_id=session.id,
-        user_id=session.user_id,
-        event_type=event_type,
-        severity=severity,
-        details=details
-    )
-    return jsonify({'success': True, 'event_id': ev.id if ev else None})
+@api_bp.route('/payments/click/complete', methods=['POST'])
+def click_complete():
+    data = request.form.to_dict() if request.form else (request.get_json() or {})
+    response_data = PaymentService.handle_click_complete(data, ip_address=request.remote_addr)
+    return jsonify(response_data)
 
-@api_bp.route('/public/verify/<cert_no>', methods=['GET'])
-def api_verify_certificate(cert_no):
-    res = CertificateService.verify(cert_no, ip_address=request.remote_addr, user_agent=request.headers.get('User-Agent'))
-    return jsonify(res)
+@api_bp.route('/payments/click/callback', methods=['POST'])
+def click_unified_callback():
+    """Click yagona webhook (action = 0 yoki action = 1)"""
+    data = request.form.to_dict() if request.form else (request.get_json() or {})
+    action = str(data.get('action', '0'))
+    if action == '1':
+        response_data = PaymentService.handle_click_complete(data, ip_address=request.remote_addr)
+    else:
+        response_data = PaymentService.handle_click_prepare(data, ip_address=request.remote_addr)
+    return jsonify(response_data)
+
+# ==================== NATIJALAR VA BILDIRISHNOMALAR ====================
+
+@api_bp.route('/results', methods=['GET'])
+def api_user_results():
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'message': "Avtorizatsiya talab qilinadi"}), 401
+    results = Result.query.filter_by(user_id=current_user.id).order_by(Result.created_at.desc()).all()
+    return jsonify({'success': True, 'data': [r.to_dict() for r in results]})
+
+@api_bp.route('/notifications', methods=['GET'])
+def api_notifications():
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'message': "Avtorizatsiya talab qilinadi"}), 401
+    notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.created_at.desc()).limit(15).all()
+    return jsonify({'success': True, 'data': [n.to_dict() for n in notifications]})

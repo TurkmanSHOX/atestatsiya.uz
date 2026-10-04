@@ -1,131 +1,52 @@
 {% extends "admin/layout.html" %}
 
-{% block title %}To'lovlar Nazorati{% endblock %}
+{% block title %}Click To'lovlari Boshqaruvi{% endblock %}
 
-{% block admin_content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
   <div>
-    <h1 class="h3 fw-bold text-dark mb-0">To'lovlar Nazorati va Chek Verifikatsiyasi</h1>
-    <span class="text-muted small">Nomzodlar tomonidan yuklangan cheklarni tekshirish va tasdiqlash</span>
-  </div>
-  <div class="btn-group btn-group-sm">
-    <a href="{{ url_for('admin.payments_list', status='PENDING') }}" class="btn {% if current_status == 'PENDING' %}btn-warning fw-bold{% else %}btn-outline-secondary{% endif %}">
-      Kutilayotganlar
-    </a>
-    <a href="{{ url_for('admin.payments_list', status='PAID') }}" class="btn {% if current_status == 'PAID' %}btn-success fw-bold{% else %}btn-outline-secondary{% endif %}">
-      Tasdiqlanganlar
-    </a>
-    <a href="{{ url_for('admin.payments_list', status='REJECTED') }}" class="btn {% if current_status == 'REJECTED' %}btn-danger fw-bold{% else %}btn-outline-secondary{% endif %}">
-      Rad etilganlar
-    </a>
-    <a href="{{ url_for('admin.payments_list', status='ALL') }}" class="btn {% if current_status == 'ALL' %}btn-dark fw-bold{% else %}btn-outline-secondary{% endif %}">
-      Barchasi
-    </a>
+    <h1 class="h2 fw-bold text-dark mb-0">Click To'lovlari Jurnali</h1>
+    <span class="text-muted small">Server tomonidan tasdiqlangan barcha tranzaksiyalar va buyurtmalar</span>
   </div>
 </div>
 
-<div class="card border rounded-3 bg-white shadow-sm overflow-hidden">
+<div class="card border-0 shadow-sm rounded-3">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-      <thead class="table-light small">
+      <thead class="table-light">
         <tr>
-          <th>F.I.Sh.</th>
-          <th>Attestatsiya</th>
+          <th>Buyurtma №</th>
+          <th>Foydalanuvchi</th>
+          <th>Paket</th>
           <th>Summa</th>
-          <th>Sana</th>
-          <th>To'lov usuli</th>
-          <th>Chek</th>
+          <th>Tranzaksiya ID (Click)</th>
           <th>Holat</th>
-          <th class="text-end">Harakatlar</th>
+          <th>Sana</th>
         </tr>
       </thead>
       <tbody>
         {% for p in payments %}
         <tr>
+          <td><code>{{ p.order.order_number if p.order else ('ORD-' ~ p.id) }}</code></td>
           <td>
-            <strong class="d-block text-dark">{{ p.user.full_name }}</strong>
-            <span class="text-muted small">{{ p.user.phone }}</span>
+            <div class="fw-bold text-dark">{{ p.user.full_name if p.user else 'Foydalanuvchi' }}</div>
+            <div class="text-muted small">{{ p.user.phone if p.user else '' }}</div>
           </td>
-          <td>{{ p.registration.attestation.title }}</td>
+          <td>{{ p.order.package.name if p.order and p.order.package else 'Tarif' }}</td>
           <td class="fw-bold text-success">{{ p.formatted_amount() }}</td>
-          <td class="small">{{ p.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-          <td><span class="badge bg-light text-dark border">{{ p.payment_method }}</span></td>
+          <td><span class="font-monospace small">{{ p.click_trans_id or '—' }}</span></td>
           <td>
-            {% if p.latest_receipt %}
-            <a href="/{{ p.latest_receipt.file_path }}" target="_blank" class="btn btn-sm btn-outline-primary py-0">
-              <i class="bi bi-file-earmark-image me-1"></i> Chekni ko'rish
-            </a>
-            {% else %}
-            <span class="text-muted small">Chek yo'q</span>
-            {% endif %}
-          </td>
-          <td>
-            <span class="badge 
-              {% if p.status == 'PAID' %}bg-success
-              {% elif p.status == 'PENDING' %}bg-warning text-dark
-              {% elif p.status == 'REJECTED' %}bg-danger
-              {% else %}bg-secondary{% endif %}">
+            <span class="badge {% if p.status == 'PAID' %}bg-success{% elif p.status == 'PENDING' %}bg-warning text-dark{% elif p.status == 'FAILED' %}bg-danger{% else %}bg-secondary{% endif %}">
               {{ p.status }}
             </span>
           </td>
-          <td class="text-end">
-            {% if p.status == 'PENDING' %}
-            <form method="POST" action="{{ url_for('admin.payment_action', payment_id=p.id) }}" class="d-inline">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="hidden" name="action" value="approve">
-              <button type="submit" class="btn btn-sm btn-success fw-bold" onclick="return confirm('Ushbu to\'lovni tasdiqlab, nomzodga imtihon ruxsatini bermoqchimisiz?');">
-                <i class="bi bi-check-lg me-1"></i> Tasdiqlash
-              </button>
-            </form>
-            
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="openRejectModal({{ p.id }})">
-              Rad etish
-            </button>
-            {% else %}
-            <span class="text-muted small">-</span>
-            {% endif %}
-          </td>
+          <td class="text-muted small">{{ p.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
         </tr>
         {% else %}
-        <tr>
-          <td colspan="8" class="text-center py-4 text-muted">To'lovlar mavjud emas.</td>
-        </tr>
+        <tr><td colspan="7" class="text-center text-muted py-4">To'lovlar mavjud emas</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
-
-<!-- Reject Modal with Reason Input -->
-<div class="modal fade" id="rejectModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content rounded-3 border-0 shadow">
-      <form id="rejectForm" method="POST" action="">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="action" value="reject">
-
-        <div class="modal-header">
-          <h5 class="modal-title fw-bold text-danger">To'lovni Rad Etish</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p class="small text-muted mb-2">Foydalanuvchiga rad etish sababi ko'rsatiladi va qayta chek yuklash imkoni beriladi.</p>
-          <label class="form-label small fw-semibold">Rad etish sababi <span class="text-danger">*</span></label>
-          <textarea name="reason" class="form-control" rows="3" placeholder="Masalan: Kvitansiyada summa noto'g'ri ko'rsatilgan yoki chek xira chiqqan..." required></textarea>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Bekor qilish</button>
-          <button type="submit" class="btn btn-danger fw-bold">Rad etish</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<script>
-  function openRejectModal(paymentId) {
-    document.getElementById('rejectForm').action = `/admin/payments/${paymentId}/action`;
-    new bootstrap.Modal(document.getElementById('rejectModal')).show();
-  }
-</script>
 {% endblock %}

@@ -1,0 +1,110 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}{{ subject.name }} - Mavzular Boshqaruvi{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+  <div>
+    <h1 class="h2 fw-bold text-dark mb-0">{{ subject.name }} — Bo'limlar va Mavzular</h1>
+    <span class="text-muted small">Fanga tegishli bo'lim va mavzular tuzilmasini yaratish</span>
+  </div>
+  <a href="{{ url_for('admin.subjects_list') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Fanlarga qaytish
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Yangi Bo'lim Qo'shish -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm rounded-3 p-4 mb-4 bg-white">
+      <h5 class="fw-bold mb-3"><i class="bi bi-folder-plus text-primary me-2"></i> Yangi Bo'lim Qo'shish</h5>
+      <form method="POST" action="{{ url_for('admin.section_create', subject_id=subject.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Bo'lim nomi</label>
+          <input type="text" name="name" class="form-control" required placeholder="Masalan: Algebra, Geometriya">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Tartib raqami</label>
+          <input type="number" name="order_num" class="form-control" value="0">
+        </div>
+        <button type="submit" class="btn btn-primary w-100 fw-bold">
+          <i class="bi bi-plus-circle me-1"></i> Bo'limni saqlash
+        </button>
+      </form>
+    </div>
+
+    <!-- Yangi Mavzu Qo'shish -->
+    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
+      <h5 class="fw-bold mb-3"><i class="bi bi-journal-plus text-success me-2"></i> Yangi Mavzu Qo'shish</h5>
+      <form method="POST" action="{{ url_for('admin.topic_create', subject_id=subject.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Tegishli Bo'lim</label>
+          <select name="section_id" class="form-select">
+            <option value="">Bo'limsiz (Umumiy)</option>
+            {% for sec in sections %}
+            <option value="{{ sec.id }}">{{ sec.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Mavzu nomi <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control" required placeholder="Masalan: Kvadrat tenglamalar">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Mavzu kodi</label>
+          <input type="text" name="code" class="form-control" placeholder="M-01">
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Tartib raqami</label>
+          <input type="number" name="order_num" class="form-control" value="0">
+        </div>
+        <button type="submit" class="btn btn-success w-100 fw-bold">
+          <i class="bi bi-plus-circle me-1"></i> Mavzuni saqlash
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mavzular ro'yxati -->
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm rounded-3 p-4 bg-white">
+      <h5 class="fw-bold mb-3"><i class="bi bi-diagram-3 text-dark me-2"></i> Mavzular Ierarxiyasi</h5>
+      
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Bo'lim</th>
+              <th>Mavzu nomi</th>
+              <th>Savollar soni</th>
+              <th>Holat</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in topics %}
+            <tr>
+              <td><span class="badge bg-secondary-subtle text-secondary">{{ t.section.name if t.section else 'Umumiy' }}</span></td>
+              <td class="fw-bold text-dark">{{ t.name }}</td>
+              <td>
+                <a href="{{ url_for('admin.questions_list', subject_id=subject.id, topic_id=t.id) }}" class="badge bg-info-subtle text-info text-decoration-none p-2">
+                  {{ t.questions|length }} ta savol
+                </a>
+              </td>
+              <td>
+                <span class="badge {% if t.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                  {% if t.is_active %}Faol{% else %}Nofaol{% endif %}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-4">Mavzular mavjud emas</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

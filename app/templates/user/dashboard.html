@@ -1,165 +1,208 @@
 {% extends "base.html" %}
 
-{% block title %}Shaxsiy Kabinet - {{ site_name }}{% endblock %}
+{% block title %}O'qituvchi Kabineti{% endblock %}
 
 {% block content %}
-<div class="bg-light py-4 border-bottom">
-  <div class="container d-flex flex-wrap justify-content-between align-items-center">
-    <div>
-      <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 mb-1">
-        Nomzod Profili
-      </span>
-      <h3 class="fw-bold text-dark mb-0">{{ current_user.full_name }}</h3>
-      <span class="text-muted small">{{ current_user.organization or 'Tashkilot belgilanmagan' }} | {{ current_user.position or 'Lavozim kiritilmagan' }}</span>
-    </div>
-    <div class="d-flex gap-2 mt-3 mt-md-0">
-      <a href="{{ url_for('user.profile') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-gear me-1"></i> Profil sozlamalari
-      </a>
-      <a href="{{ url_for('public.attestations') }}" class="btn btn-gov-primary btn-sm">
-        <i class="bi bi-plus-circle me-1"></i> Yangi attestatsiya
-      </a>
-    </div>
-  </div>
-</div>
-
-<div class="container py-5">
-  <!-- Notifications Section -->
-  {% if notifications %}
-  <div class="mb-4">
-    <div class="card border-0 shadow-sm rounded-3 bg-white p-3">
-      <h6 class="fw-bold text-dark mb-2"><i class="bi bi-bell-fill text-warning me-2"></i> Muhim bildirishnomalar</h6>
-      <div class="list-group list-group-flush small">
-        {% for n in notifications %}
-        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+<div class="container my-5">
+  <!-- Salomlashish va Foydalanuvchi ma'lumoti -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
+    <div class="row align-items-center g-3">
+      <div class="col-md-8">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-success text-white rounded-circle p-3 fs-3 fw-bold d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+            {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+          </div>
           <div>
-            <strong class="text-dark">{{ n.title }}:</strong> {{ n.message }}
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <span class="text-muted small">{{ n.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
-            {% if n.link %}
-            <a href="{{ n.link }}" class="btn btn-sm btn-outline-success py-0 px-2">O'tish</a>
-            {% endif %}
+            <h3 class="fw-bold mb-1">Salom, {{ current_user.first_name }}!</h3>
+            <p class="text-muted small mb-0">
+              <i class="bi bi-building me-1"></i> {{ current_user.organization or 'Maktab' }} | 
+              <i class="bi bi-book me-1"></i> {{ current_user.specialty or 'Fan' }} | 
+              <i class="bi bi-geo-alt me-1"></i> {{ current_user.region or 'O\'zbekiston' }}
+            </p>
           </div>
         </div>
-        {% endfor %}
+      </div>
+      <div class="col-md-4 text-md-end">
+        {% if stats.package_info %}
+          <span class="badge bg-success-subtle text-success p-2 px-3 rounded-pill border border-success-subtle fw-semibold">
+            <i class="bi bi-check-circle-fill me-1"></i> {{ stats.package_info.name }} (Qolgan: {{ stats.package_info.remaining_days }} kun)
+          </span>
+        {% else %}
+          <a href="{{ url_for('user.packages_list') }}" class="btn btn-warning text-dark fw-bold btn-sm rounded-pill px-3 shadow-sm">
+            <i class="bi bi-lightning-charge-fill me-1"></i> Obunani faollashtirish
+          </a>
+        {% endif %}
       </div>
     </div>
   </div>
-  {% endif %}
 
-  <!-- Quick Stats -->
-  <div class="row g-4 mb-5">
-    <div class="col-md-4">
-      <div class="card border rounded-3 p-4 bg-white shadow-sm">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="text-muted small">Mening arizalarim</span>
-          <i class="bi bi-file-earmark-text text-primary fs-4"></i>
+  <!-- Asosiy Ko'rsatkichlar (KPIs) -->
+  <div class="row g-4 mb-4">
+    <!-- 1. Tayyorgarlik darajasi indeksi -->
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted small fw-semibold">Tayyorgarlik darajasi</span>
+          <span class="badge bg-success-subtle text-success"><i class="bi bi-speedometer2"></i> Ichki indeks</span>
         </div>
-        <h3 class="fw-bold text-dark mb-0">{{ registrations|length }} ta</h3>
+        <div class="d-flex align-items-baseline mb-2">
+          <h2 class="display-5 fw-extrabold text-success mb-0">{{ stats.readiness_score }}%</h2>
+        </div>
+        <div class="progress" style="height: 6px;">
+          <div class="progress-bar bg-success" role="progressbar" style="width: {{ stats.readiness_score }}%;"></div>
+        </div>
+        <span class="text-muted small mt-2 d-block">Testlar va qamrov asosida</span>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card border rounded-3 p-4 bg-white shadow-sm">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="text-muted small">Topshirilgan sinovlar</span>
-          <i class="bi bi-check2-circle text-success fs-4"></i>
+
+    <!-- 2. Ishlangan testlar -->
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted small fw-semibold">Ishlangan testlar</span>
+          <div class="p-2 bg-primary-subtle text-primary rounded-circle"><i class="bi bi-journal-check"></i></div>
         </div>
-        <h3 class="fw-bold text-dark mb-0">{{ results|length }} ta</h3>
+        <h2 class="display-5 fw-extrabold text-dark mb-0">{{ stats.total_tests }}</h2>
+        <span class="text-muted small mt-2 d-block">Barcha test sinovlari soni</span>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card border rounded-3 p-4 bg-white shadow-sm">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="text-muted small">Faol sertifikatlar</span>
-          <i class="bi bi-award text-warning fs-4"></i>
+
+    <!-- 3. To'g'ri javoblar foizi -->
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted small fw-semibold">To'g'ri javoblar</span>
+          <div class="p-2 bg-success-subtle text-success rounded-circle"><i class="bi bi-pie-chart-fill"></i></div>
         </div>
-        <h3 class="fw-bold text-dark mb-0">{{ certificates|length }} ta</h3>
+        <h2 class="display-5 fw-extrabold text-dark mb-0">{{ stats.average_accuracy }}%</h2>
+        <span class="text-muted small mt-2 d-block">O'rtacha aniqlik ko'rsatkichi</span>
       </div>
+    </div>
+
+    <!-- 4. Zaif mavzular soni -->
+    <div class="col-lg-3 col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted small fw-semibold">Zaif mavzular</span>
+          <div class="p-2 bg-danger-subtle text-danger rounded-circle"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        </div>
+        <h2 class="display-5 fw-extrabold text-danger mb-0">{{ stats.weak_topics_count }} ta</h2>
+        <span class="text-muted small mt-2 d-block">Aniqligi &lt;60% bo'lgan bo'limlar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asosiy Tugmalar (Boshqaruv Navigatsiyasi) -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-5 bg-white">
+    <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center">
+      <a href="{{ url_for('user.tests_catalog') }}" class="btn btn-success btn-lg fw-bold px-4 py-3 shadow-sm flex-grow-1">
+        <i class="bi bi-play-circle-fill me-2 fs-5"></i> Test boshlash
+      </a>
+      <a href="{{ url_for('user.mistakes_view') }}" class="btn btn-outline-danger btn-lg fw-bold px-4 py-3 shadow-sm flex-grow-1">
+        <i class="bi bi-x-circle-fill me-2 fs-5"></i> Xatolarim ({{ stats.mistakes_count }})
+      </a>
+      <a href="{{ url_for('user.weak_topics_view') }}" class="btn btn-outline-warning text-dark btn-lg fw-bold px-4 py-3 shadow-sm flex-grow-1">
+        <i class="bi bi-lightning-charge-fill me-2 fs-5 text-warning"></i> Zaif mavzular
+      </a>
+      <a href="{{ url_for('user.results_list') }}" class="btn btn-outline-primary btn-lg fw-bold px-4 py-3 shadow-sm flex-grow-1">
+        <i class="bi bi-trophy-fill me-2 fs-5"></i> Natijalarim
+      </a>
+      <a href="{{ url_for('user.packages_list') }}" class="btn btn-outline-dark btn-lg fw-bold px-4 py-3 shadow-sm flex-grow-1">
+        <i class="bi bi-box-seam-fill me-2 fs-5"></i> Paketlar
+      </a>
     </div>
   </div>
 
   <div class="row g-4">
-    <!-- Active Registrations -->
-    <div class="col-lg-8">
-      <div class="card border rounded-3 p-4 bg-white shadow-sm mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="fw-bold text-dark mb-0">Mening attestatsiyalarim</h5>
-          <a href="{{ url_for('user.my_attestations') }}" class="small text-success fw-bold text-decoration-none">Barchasi</a>
+    <!-- So'nggi Natijalar -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-success me-2"></i> So'nggi Test Natijalari</h5>
+          <a href="{{ url_for('user.results_list') }}" class="text-success text-decoration-none small fw-bold">
+            Barchasi <i class="bi bi-arrow-right"></i>
+          </a>
         </div>
 
-        {% if registrations %}
-        <div class="list-group list-group-flush">
-          {% for reg in registrations %}
-          <div class="list-group-item px-0 py-3 d-flex flex-wrap justify-content-between align-items-center">
-            <div>
-              <span class="font-monospace small text-muted">{{ reg.registration_number }}</span>
-              <h6 class="fw-bold text-dark mb-1">{{ reg.attestation.title }}</h6>
-              <span class="badge 
-                {% if reg.step in ['APPROVED', 'EXAM_READY'] %}bg-success
-                {% elif reg.step == 'ADMIN_REVIEW' %}bg-warning text-dark
-                {% elif reg.step == 'COMPLETED' %}bg-primary
-                {% elif reg.step == 'REJECTED' %}bg-danger
-                {% else %}bg-secondary{% endif %}">
-                {% if reg.step == 'DOCUMENTS' %}Hujjatlar bosqichida
-                {% elif reg.step == 'PAYMENT' %}To'lov kutilmoqda
-                {% elif reg.step == 'ADMIN_REVIEW' %}Admin tasdig'i kutilmoqda
-                {% elif reg.step in ['APPROVED', 'EXAM_READY'] %}Imtihonga ruxsat berildi
-                {% elif reg.step == 'COMPLETED' %}Imtihon topshirildi
-                {% elif reg.step == 'REJECTED' %}Rad etilgan
-                {% else %}Ro'yxatdan o'tildi{% endif %}
-              </span>
-            </div>
-
-            <div class="mt-2 mt-sm-0">
-              {% if reg.step in ['APPROVED', 'EXAM_READY'] %}
-              <a href="{{ url_for('user.device_check', reg_id=reg.id) }}" class="btn btn-gov-primary btn-sm">
-                <i class="bi bi-play-circle me-1"></i> Imtihonga kirish
-              </a>
-              {% elif reg.step in ['REGISTERED', 'DOCUMENTS', 'PAYMENT'] %}
-              <a href="{{ url_for('user.attestation_payment', reg_id=reg.id) }}" class="btn btn-outline-success btn-sm">
-                <i class="bi bi-credit-card me-1"></i> To'lov qilish
-              </a>
-              {% else %}
-              <a href="{{ url_for('user.my_attestations') }}" class="btn btn-light btn-sm border">
-                Tafsilotlar
-              </a>
-              {% endif %}
-            </div>
-          </div>
-          {% endfor %}
+        {% if stats.recent_results %}
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead class="table-light">
+              <tr class="small text-muted">
+                <th>Test</th>
+                <th>Sana</th>
+                <th>Natija</th>
+                <th>Amal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for res in stats.recent_results %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ res.test.title if res.test else 'Test sinovi' }}</div>
+                  <div class="text-muted small">{{ res.total_questions }} ta savol | {{ res.formatted_completion_time() }}</div>
+                </td>
+                <td class="small text-muted">{{ res.created_at.strftime('%d.%m.%Y') }}</td>
+                <td>
+                  <span class="badge {% if res.is_passed %}bg-success{% else %}bg-danger{% endif %} px-2 py-1">
+                    {{ res.percentage }}%
+                  </span>
+                </td>
+                <td>
+                  <a href="{{ url_for('user.result_detail', result_id=res.id) }}" class="btn btn-sm btn-outline-secondary">
+                    Tahlil
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
         {% else %}
-        <div class="text-center py-4">
-          <p class="text-muted small mb-3">Siz hali birorta ham attestatsiyaga ariza topshirmadingiz.</p>
-          <a href="{{ url_for('public.attestations') }}" class="btn btn-gov-outline btn-sm">Katalogdan tanlash</a>
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-file-earmark-text fs-1 mb-2 d-block"></i>
+          <h6>Siz hali test ishlamagansiz</h6>
+          <p class="small">O'zingiz qiziqqan fanni tanlab, birinchi test sinovini topshiring.</p>
+          <a href="{{ url_for('user.tests_catalog') }}" class="btn btn-success btn-sm fw-bold">
+            Birinchi testni boshlash
+          </a>
         </div>
         {% endif %}
       </div>
     </div>
 
-    <!-- Recent Certificates -->
-    <div class="col-lg-4">
-      <div class="card border rounded-3 p-4 bg-white shadow-sm">
-        <h5 class="fw-bold text-dark mb-3">Mening sertifikatlarim</h5>
-        {% if certificates %}
-        <div class="list-group list-group-flush small">
-          {% for cert in certificates %}
-          <div class="list-group-item px-0 py-2">
-            <span class="fw-bold d-block text-dark">{{ cert.attestation.title }}</span>
-            <span class="font-monospace text-success small">{{ cert.certificate_number }}</span>
-            <div class="d-flex justify-content-between align-items-center mt-2">
-              <span class="text-muted small">Amal qiladi: {{ cert.valid_until }}</span>
-              <a href="{{ url_for('public.verify_certificate', cert_no=cert.verification_uuid) }}" target="_blank" class="btn btn-outline-secondary btn-sm py-0">QR tekshirish</a>
+    <!-- Zaif Mavzular Ro'yxati -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+        <h5 class="fw-bold mb-3"><i class="bi bi-exclamation-triangle text-warning me-2"></i> Qayta Ishlash Kerak Bo'lgan Mavzular</h5>
+        <p class="text-muted small mb-4">Ushbu mavzularda aniqlik ko'rsatkichi 60% dan past. Ularni mustahkamlash tavsiya etiladi.</p>
+
+        {% if stats.weak_topics %}
+          <div class="list-group list-group-flush mb-4">
+            {% for wt in stats.weak_topics %}
+            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom">
+              <div>
+                <div class="fw-bold text-dark">{{ wt.topic_name }}</div>
+                <div class="text-muted small">{{ wt.subject_name }} | {{ wt.answered }} ta savol ishlangan</div>
+              </div>
+              <span class="badge bg-danger-subtle text-danger px-2 py-1 fw-bold fs-6">
+                {{ wt.accuracy }}%
+              </span>
             </div>
+            {% endfor %}
           </div>
-          {% endfor %}
-        </div>
+          <form method="POST" action="{{ url_for('user.create_weak_topics_test') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-warning text-dark fw-bold w-100 py-2 shadow-sm">
+              <i class="bi bi-play-circle-fill me-1"></i> Shu mavzulardan test yaratish
+            </button>
+          </form>
         {% else %}
-        <div class="text-center py-4 text-muted small">
-          <i class="bi bi-award fs-1 d-block text-secondary mb-2"></i>
-          Hozircha rasmiy sertifikatlar mavjud emas.
-        </div>
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-check-circle-fill text-success fs-1 mb-2 d-block"></i>
+            <h6>Zaif mavzular aniqlanmadi!</h6>
+            <p class="small">Bilimlaringiz yaxshi darajada. Qiyinroq savollarni ishlab ko'ring.</p>
+          </div>
         {% endif %}
       </div>
     </div>

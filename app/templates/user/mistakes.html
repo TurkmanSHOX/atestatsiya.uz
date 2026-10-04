@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Xatolarim - Attestatsiyaga Tayyorlov{% endblock %}
+
+{% block content %}
+<div class="bg-dark text-white py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h1 class="fw-bold mb-2"><i class="bi bi-x-circle-fill text-danger me-2"></i> Xatolarim</h1>
+        <p class="text-white-50 mb-0">Ilgari ishlagan testlaringizda xato qilgan savollaringiz to'plami.</p>
+      </div>
+      <div>
+        {% if mistakes %}
+        <form method="POST" action="{{ url_for('user.create_mistakes_test') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger btn-lg fw-bold shadow">
+            <i class="bi bi-play-circle-fill me-1"></i> Xatolarimdan test yaratish
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container my-5">
+  {% if mistakes %}
+  <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+    <div class="alert alert-info py-2 px-3 small border-0 mb-4">
+      <i class="bi bi-lightbulb-fill me-1"></i> Ushbu savollarni to'g'ri ishlaganingizdan so'ng, ular avtomatik ravishda xatolar ro'yxatidan chiqariladi.
+    </div>
+
+    <div class="list-group list-group-flush">
+      {% for m in mistakes %}
+      {% set q = m.question %}
+      <div class="list-group-item py-4 border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="badge bg-secondary-subtle text-secondary">{{ q.subject.name if q.subject else 'Fan' }}</span>
+          <span class="badge bg-danger-subtle text-danger">Urinishlar: {{ m.attempts_count }} ta (Xato: {{ m.incorrect_count }})</span>
+        </div>
+        <h5 class="fw-bold text-dark mb-3">{{ q.text }}</h5>
+
+        <div class="row g-2 mb-3">
+          {% for opt in q.options %}
+          <div class="col-md-6">
+            <div class="p-2 border rounded-3 small {% if opt.is_correct %}bg-success-subtle border-success text-success fw-bold{% else %}bg-light text-muted{% endif %}">
+              <span class="fw-bold me-1">{{ opt.key }})</span> {{ opt.text }}
+              {% if opt.is_correct %}
+                <i class="bi bi-check-circle-fill ms-1"></i> (To'g'ri javob)
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if q.explanation %}
+        <div class="p-3 bg-light rounded-3 small border-start border-3 border-success text-muted">
+          <strong>Izoh / Tushuntirish:</strong> {{ q.explanation }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div class="p-4 bg-success-subtle text-success rounded-circle d-inline-block mb-3">
+      <i class="bi bi-check-circle-fill display-4"></i>
+    </div>
+    <h3 class="fw-bold">Xatolar mavjud emas!</h3>
+    <p class="text-muted">Barcha savollarni a'lo darajada bajargansiz yoki hali test topshirmagansiz.</p>
+    <a href="{{ url_for('user.tests_catalog') }}" class="btn btn-success fw-bold px-4 py-2">
+      Testlarni ko'rish
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

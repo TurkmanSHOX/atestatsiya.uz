@@ -14,6 +14,7 @@ class QuestionType:
     AUDIO_BASED = 'AUDIO_BASED'
     VIDEO_BASED = 'VIDEO_BASED'
     FILL_BLANK = 'FILL_BLANK'
+    TEXT_BASED = 'TEXT_BASED'
 
     CHOICES = [
         ('SINGLE_CHOICE', "Bitta to'g'ri javob"),
@@ -26,7 +27,8 @@ class QuestionType:
         ('FORMULA_BASED', "Formula asosidagi savol"),
         ('AUDIO_BASED', "Audio savol"),
         ('VIDEO_BASED', "Video savol"),
-        ('FILL_BLANK', "Bo'sh joyni to'ldirish")
+        ('FILL_BLANK', "Bo'sh joyni to'ldirish"),
+        ('TEXT_BASED', "Matnli savol")
     ]
 
 class DifficultyLevel:
@@ -44,34 +46,105 @@ class Subject(db.Model):
     __tablename__ = 'subjects'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(150), nullable=False, unique=True)
+    name = db.Column(db.String(150), nullable=False, unique=True, index=True)
+    slug = db.Column(db.String(150), nullable=False, unique=True, index=True)
     code = db.Column(db.String(50), nullable=True)
     description = db.Column(db.Text, nullable=True)
+    image_path = db.Column(db.String(255), nullable=True)
+    is_active = db.Column(db.Boolean, default=True, index=True)
+    order_num = db.Column(db.Integer, default=0)
+    category = db.Column(db.String(100), default='Maktab fani')
+    academic_year = db.Column(db.String(20), default='2024-2025')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Aloqalar
+    sections = db.relationship('SubjectSection', back_populates='subject', cascade='all, delete-orphan', order_by='SubjectSection.order_num')
+    topics = db.relationship('Topic', back_populates='subject', cascade='all, delete-orphan', order_by='Topic.order_num')
+    questions = db.relationship('Question', back_populates='subject')
+    tests = db.relationship('Test', back_populates='subject')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'slug': self.slug,
+            'code': self.code,
+            'description': self.description,
+            'image_path': self.image_path,
+            'is_active': self.is_active,
+            'order_num': self.order_num,
+            'category': self.category,
+            'academic_year': self.academic_year,
+            'sections_count': len(self.sections),
+            'topics_count': len(self.topics),
+            'questions_count': len(self.questions)
+        }
+
+class SubjectSection(db.Model):
+    __tablename__ = 'subject_sections'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='CASCADE'), nullable=False, index=True)
+    name = db.Column(db.String(150), nullable=False)
+    order_num = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    topics = db.relationship('Topic', back_populates='subject', cascade='all, delete-orphan')
-    questions = db.relationship('Question', back_populates='subject')
+    subject = db.relationship('Subject', back_populates='sections')
+    topics = db.relationship('Topic', back_populates='section', cascade='all, delete-orphan')
+    questions = db.relationship('Question', back_populates='section')
 
 class Topic(db.Model):
     __tablename__ = 'topics'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='CASCADE'), nullable=False, index=True)
+    section_id = db.Column(db.Integer, db.ForeignKey('subject_sections.id', ondelete='SET NULL'), nullable=True, index=True)
     name = db.Column(db.String(150), nullable=False)
     code = db.Column(db.String(50), nullable=True)
+    order_num = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     subject = db.relationship('Subject', back_populates='topics')
+    section = db.relationship('SubjectSection', back_populates='topics')
+    subtopics = db.relationship('Subtopic', back_populates='topic', cascade='all, delete-orphan')
     questions = db.relationship('Question', back_populates='topic')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'subject_id': self.subject_id,
+            'subject_name': self.subject.name if self.subject else None,
+            'section_id': self.section_id,
+            'section_name': self.section.name if self.section else None,
+            'name': self.name,
+            'code': self.code,
+            'is_active': self.is_active,
+            'questions_count': len(self.questions)
+        }
+
+class Subtopic(db.Model):
+    __tablename__ = 'subtopics'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topics.id', ondelete='CASCADE'), nullable=False, index=True)
+    name = db.Column(db.String(150), nullable=False)
+    order_num = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    topic = db.relationship('Topic', back_populates='subtopics')
+    questions = db.relationship('Question', back_populates='subtopic')
 
 class Question(db.Model):
     __tablename__ = 'questions'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False, index=True)
+    section_id = db.Column(db.Integer, db.ForeignKey('subject_sections.id', ondelete='SET NULL'), nullable=True, index=True)
     topic_id = db.Column(db.Integer, db.ForeignKey('topics.id'), nullable=False, index=True)
+    subtopic_id = db.Column(db.Integer, db.ForeignKey('subtopics.id', ondelete='SET NULL'), nullable=True, index=True)
     
     question_type = db.Column(db.String(30), nullable=False, default=QuestionType.SINGLE_CHOICE, index=True)
     text = db.Column(db.Text, nullable=False)
@@ -79,7 +152,13 @@ class Question(db.Model):
     difficulty = db.Column(db.String(20), default=DifficultyLevel.MEDIUM, index=True)
     points = db.Column(db.Numeric(5, 2), default=1.00)
     
-    status = db.Column(db.String(20), default='ACTIVE', index=True)
+    source = db.Column(db.String(255), nullable=True) # Manba
+    academic_year = db.Column(db.String(20), default='2024-2025')
+    tags = db.Column(db.String(255), nullable=True)
+    
+    status = db.Column(db.String(20), default='ACTIVE', index=True) # ACTIVE, INACTIVE
+    is_approved = db.Column(db.Boolean, default=True, index=True) # Admin tasdig'i
+    version = db.Column(db.Integer, default=1)
     hash = db.Column(db.String(64), nullable=False, index=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -87,9 +166,12 @@ class Question(db.Model):
 
     # Aloqalar
     subject = db.relationship('Subject', back_populates='questions')
+    section = db.relationship('SubjectSection', back_populates='questions')
     topic = db.relationship('Topic', back_populates='questions')
+    subtopic = db.relationship('Subtopic', back_populates='questions')
     options = db.relationship('QuestionOption', back_populates='question', cascade='all, delete-orphan')
     media = db.relationship('QuestionMedia', back_populates='question', cascade='all, delete-orphan')
+    versions = db.relationship('QuestionVersion', back_populates='question', cascade='all, delete-orphan')
 
     @staticmethod
     def calculate_hash(text: str) -> str:
@@ -99,61 +181,89 @@ class Question(db.Model):
     def get_correct_option_ids(self):
         return [opt.id for opt in self.options if opt.is_correct]
 
+    def create_version_snapshot(self, created_by_id=None):
+        """Eski holatni question_versions jadvaliga arxivlash"""
+        opts_data = [{'key': opt.key, 'text': opt.text, 'is_correct': opt.is_correct, 'explanation': opt.explanation} for opt in self.options]
+        v = QuestionVersion(
+            question_id=self.id,
+            version_number=self.version,
+            text=self.text,
+            explanation=self.explanation,
+            difficulty=self.difficulty,
+            options_json=opts_data,
+            created_by_id=created_by_id
+        )
+        db.session.add(v)
+        self.version += 1
+        return v
+
     def to_dict(self, include_correct=False):
         return {
             'id': self.id,
             'subject_id': self.subject_id,
             'subject_name': self.subject.name if self.subject else None,
+            'section_id': self.section_id,
+            'section_name': self.section.name if self.section else None,
             'topic_id': self.topic_id,
             'topic_name': self.topic.name if self.topic else None,
             'question_type': self.question_type,
             'text': self.text,
-            'explanation': self.explanation if include_correct else None,
+            'explanation': self.explanation,
             'difficulty': self.difficulty,
             'points': float(self.points),
+            'source': self.source,
+            'tags': self.tags,
             'status': self.status,
-            'options': [opt.to_dict(include_correct=include_correct) for opt in self.options],
-            'media': [m.to_dict() for m in self.media]
+            'is_approved': self.is_approved,
+            'version': self.version,
+            'options': [opt.to_dict(include_correct=include_correct) for opt in self.options]
         }
+
+class QuestionVersion(db.Model):
+    __tablename__ = 'question_versions'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False, index=True)
+    version_number = db.Column(db.Integer, nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    explanation = db.Column(db.Text, nullable=True)
+    difficulty = db.Column(db.String(20), nullable=True)
+    options_json = db.Column(db.JSON, nullable=True)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    question = db.relationship('Question', back_populates='versions')
 
 class QuestionOption(db.Model):
     __tablename__ = 'question_options'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False, index=True)
-    option_key = db.Column(db.String(10), nullable=True)
+    key = db.Column(db.String(10), nullable=False) # A, B, C, D
     text = db.Column(db.Text, nullable=False)
-    is_correct = db.Column(db.Boolean, default=False, nullable=False)
-    order_index = db.Column(db.Integer, default=0)
-    match_key = db.Column(db.String(100), nullable=True)
+    is_correct = db.Column(db.Boolean, default=False)
+    explanation = db.Column(db.Text, nullable=True)
 
     question = db.relationship('Question', back_populates='options')
 
     def to_dict(self, include_correct=False):
-        data = {
+        d = {
             'id': self.id,
-            'option_key': self.option_key,
+            'key': self.key,
             'text': self.text,
-            'order_index': self.order_index,
-            'match_key': self.match_key
+            'explanation': self.explanation
         }
         if include_correct:
-            data['is_correct'] = self.is_correct
-        return data
+            d['is_correct'] = self.is_correct
+        return d
 
 class QuestionMedia(db.Model):
     __tablename__ = 'question_media'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete='CASCADE'), nullable=False, index=True)
-    media_type = db.Column(db.String(20), nullable=False)
+    media_type = db.Column(db.String(20), nullable=False) # IMAGE, AUDIO, VIDEO
     file_path = db.Column(db.String(255), nullable=False)
+    caption = db.Column(db.String(255), nullable=True)
 
     question = db.relationship('Question', back_populates='media')
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'media_type': self.media_type,
-            'file_path': self.file_path
-        }

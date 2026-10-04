@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Tayyorgarlik Paketlari - {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="bg-light py-4 border-bottom">
+  <div class="container">
+    <h2 class="fw-bold text-dark mb-1">Tayyorgarlik Paketlari va Obuna</h2>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Boshqaruv paneli</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Paketlar</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="container py-5">
+  {% if active_entitlement %}
+  <div class="card border-0 bg-success-subtle border-start border-4 border-success rounded-3 p-4 mb-5 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <span class="badge bg-success mb-2">Faol obuna</span>
+        <h4 class="fw-bold text-dark mb-1">{{ active_entitlement.package.name }}</h4>
+        <div class="text-muted small">
+          Amal qilish muddati: <strong>{{ active_entitlement.end_date.strftime('%d.%m.%Y %H:%M') if active_entitlement.end_date else 'Cheksiz' }}</strong>
+          {% if active_entitlement.tests_remaining is not none %}
+          | Qolgan testlar: <strong>{{ active_entitlement.tests_remaining }} ta</strong>
+          {% else %}
+          | <strong>Cheksiz testlar</strong>
+          {% endif %}
+        </div>
+      </div>
+      <div>
+        <a href="{{ url_for('user.tests_catalog') }}" class="btn btn-success fw-bold">
+          <i class="bi bi-play-circle me-1"></i> Test topshirish
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="text-center mb-5">
+    <h3 class="fw-bold text-dark mb-2">O'zingizga mos tayyorgarlik paketini tanlang</h3>
+    <p class="text-muted">Barcha to'lovlar Click orqali xavfsiz va bir zumda faollashtiriladi.</p>
+  </div>
+
+  <div class="row g-4 justify-content-center">
+    {% for pkg in packages %}
+    <div class="col-lg-4 col-md-6">
+      <div class="card h-100 border rounded-4 p-4 bg-white shadow-sm position-relative {% if loop.index == 2 %}border-success border-2{% endif %}">
+        {% if loop.index == 2 %}
+        <span class="position-absolute top-0 start-50 translate-middle badge bg-success px-3 py-2 rounded-pill">
+          Eng ko'p tanlangan
+        </span>
+        {% endif %}
+
+        <div class="d-flex flex-column h-100 text-center">
+          <h4 class="fw-bold text-dark mb-2">{{ pkg.name }}</h4>
+          <p class="text-muted small mb-3">{{ pkg.description or "Imtihon oldidan bilimlarni tizimli sinash uchun mo'ljallangan." }}</p>
+
+          <div class="my-3 py-2 bg-light rounded-3">
+            <span class="display-6 fw-bold text-success">{{ pkg.formatted_price() }}</span>
+            <span class="text-muted small d-block">/ {{ pkg.duration_days }} kun amal qiladi</span>
+          </div>
+
+          <ul class="list-unstyled text-start small my-4 flex-grow-1">
+            {% for f in pkg.features %}
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> {{ f }}</li>
+            {% else %}
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Barcha fanlar katalogi</li>
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Attestatsiya simulyatsiyasi</li>
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Xatolar ustida ishlash moduli</li>
+            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Zaif mavzular tahlili & AI tavsiya</li>
+            {% endfor %}
+          </ul>
+
+          <a href="{{ url_for('user.buy_package', package_id=pkg.id) }}" class="btn btn-gov-primary btn-lg fw-bold py-2 w-100">
+            <i class="bi bi-credit-card me-1"></i> Tanlash va to'lash (Click)
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card border bg-light rounded-3 p-4 mt-5 text-center max-w-800 mx-auto">
+    <div class="d-flex align-items-center justify-content-center mb-2">
+      <i class="bi bi-shield-check text-success fs-3 me-2"></i>
+      <h5 class="fw-bold mb-0">Xavfsiz va Kafolatlangan To'lov</h5>
+    </div>
+    <p class="text-muted small mb-0">
+      To'lov Click shlyuzi orqali 100% himoyalangan holda o'tkaziladi. To'lov tasdiqlanishi bilan profilingizda obuna avtomatik ochiladi. Savollaringiz bo'lsa, qo'llab-quvvatlash xizmati bilan bog'lanishingiz mumkin.
+    </p>
+  </div>
+</div>
+{% endblock %}

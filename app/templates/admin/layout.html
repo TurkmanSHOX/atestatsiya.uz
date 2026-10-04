@@ -16,7 +16,7 @@
   <header class="navbar navbar-dark bg-dark sticky-top p-2 shadow">
     <div class="container-fluid">
       <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 fw-bold text-success d-flex align-items-center" href="{{ url_for('admin.dashboard') }}">
-        <i class="bi bi-shield-lock-fill me-2 fs-5"></i> ATTESTATSIYA ADMIN
+        <i class="bi bi-mortarboard-fill me-2 fs-5"></i> TAYYORLOV ADMIN
       </a>
       <div class="navbar-nav flex-row ms-auto gap-3 align-items-center">
         <a class="nav-link text-white small" href="{{ url_for('public.index') }}" target="_blank">
@@ -43,13 +43,8 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if 'user' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.users_list') }}">
-                <i class="bi bi-people me-2"></i> Foydalanuvchilar
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% if 'attestation' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.attestations_list') }}">
-                <i class="bi bi-journal-bookmark me-2"></i> Attestatsiyalar
+              <a class="nav-link {% if 'subject' in request.endpoint or 'topic' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.subjects_list') }}">
+                <i class="bi bi-book me-2"></i> Fanlar va Mavzular
               </a>
             </li>
             <li class="nav-item">
@@ -78,28 +73,23 @@
               </a>
             </li>
             <li class="nav-item">
+              <a class="nav-link {% if 'package' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.packages_list') }}">
+                <i class="bi bi-box-seam me-2"></i> Paketlar va Narxlar
+              </a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link {% if 'payment' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.payments_list') }}">
-                <i class="bi bi-credit-card me-2"></i> To'lovlar nazorati
+                <i class="bi bi-credit-card me-2"></i> Click To'lovlari
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if 'exam_session' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.exam_sessions') }}">
-                <i class="bi bi-broadcast me-2 text-danger"></i> Jonli Monitoring
+              <a class="nav-link {% if 'user' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.users_list') }}">
+                <i class="bi bi-people me-2"></i> O'qituvchilar
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link {% if 'result' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.results_list') }}">
-                <i class="bi bi-bar-chart-line me-2"></i> Natijalar
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% if 'certificate' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.certificates_list') }}">
-                <i class="bi bi-award me-2"></i> Sertifikatlar
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% if 'proctoring' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.proctoring_events') }}">
-                <i class="bi bi-shield-exclamation me-2 text-warning"></i> Proktoring hodisalari
+              <a class="nav-link {% if 'telegram' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.telegram_settings') }}">
+                <i class="bi bi-telegram me-2 text-primary"></i> Telegram Bot
               </a>
             </li>
             <li class="nav-item">
@@ -109,34 +99,36 @@
             </li>
             <li class="nav-item">
               <a class="nav-link {% if 'setting' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.settings_page') }}">
-                <i class="bi bi-sliders me-2"></i> Sozlamalar
+                <i class="bi bi-gear me-2"></i> Sozlamalar
               </a>
             </li>
           </ul>
         </div>
       </nav>
 
-      <!-- Admin Main Page -->
+      <!-- Main Admin Content Area -->
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-        <!-- Flash messages in admin -->
+        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
               <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-                {{ message }}
+                <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
               </div>
             {% endfor %}
           {% endif %}
         {% endwith %}
 
-        {% block admin_content %}{% endblock %}
+        {% block content %}
+          {% block admin_content %}{% endblock %}
+        {% endblock %}
       </main>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-  {% block extra_admin_js %}{% endblock %}
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,12 +1,17 @@
 {% extends "admin/layout.html" %}
 
-{% block title %}Test va Blueprint Konstruktori{% endblock %}
+{% block title %}Testlar Boshqaruvi - Admin Paneli{% endblock %}
 
 {% block admin_content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
   <div>
-    <h1 class="h3 fw-bold text-dark mb-0">Testlar va Blueprint Boshqaruvi</h1>
-    <span class="text-muted small">Imtihon strukturasi, fan va qiyinlik kvotalarini belgilash</span>
+    <h1 class="h3 fw-bold text-dark mb-0"><i class="bi bi-ui-checks text-success me-2"></i> Testlar Boshqaruvi</h1>
+    <span class="text-muted small">Fan va mavzular bo'yicha namunaviy va maxsus testlarni sozlash</span>
+  </div>
+  <div>
+    <button type="button" class="btn btn-gov-primary" data-bs-toggle="modal" data-bs-target="#createTestModal">
+      <i class="bi bi-plus-lg me-1"></i> Yangi Test Yaratish
+    </button>
   </div>
 </div>
 
@@ -16,50 +21,75 @@
       <thead class="table-light small">
         <tr>
           <th>Test nomi</th>
-          <th>Attestatsiya</th>
-          <th>Savollar</th>
-          <th>Vaqt</th>
-          <th>Blueprint qoidalari</th>
-          <th>Holat</th>
+          <th>Turi</th>
+          <th>Fan</th>
+          <th class="text-center">Savollar soni</th>
+          <th class="text-center">Vaqt (daqiqa)</th>
+          <th class="text-center">O'tish bali</th>
+          <th class="text-center">Bepul/Pullik</th>
+          <th class="text-center">Holati</th>
           <th class="text-end">Harakatlar</th>
         </tr>
       </thead>
       <tbody>
         {% for t in tests %}
         <tr>
-          <td><strong class="text-dark">{{ t.title }}</strong></td>
-          <td>{{ t.attestation.title }}</td>
-          <td>{{ t.blueprint.total_questions if t.blueprint else '-' }} ta</td>
-          <td>{{ t.duration_minutes }} daqiqa</td>
           <td>
-            {% if t.blueprint and t.blueprint.rules %}
-              <span class="badge bg-info text-dark">{{ t.blueprint.rules|length }} ta qoida</span>
-            {% else %}
-              <span class="badge bg-warning text-dark">Qoidalar yo'q</span>
+            <strong class="text-dark d-block">{{ t.title }}</strong>
+            {% if t.topic %}
+            <span class="text-muted small">Mavzu: {{ t.topic.name }}</span>
             {% endif %}
           </td>
           <td>
-            <span class="badge {% if t.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %}">
-              {{ t.status }}
-            </span>
+            <span class="badge bg-light text-dark border">{{ t.test_type }}</span>
+          </td>
+          <td>
+            {% if t.subject %}
+              <span class="fw-semibold">{{ t.subject.name }}</span>
+            {% else %}
+              <span class="text-muted">Umumiy</span>
+            {% endif %}
+          </td>
+          <td class="text-center fw-bold">{{ t.total_questions }}</td>
+          <td class="text-center">{{ t.duration_minutes }} daq</td>
+          <td class="text-center">{{ t.passing_score }}%</td>
+          <td class="text-center">
+            {% if t.is_free %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle">Bepul</span>
+            {% else %}
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Paket orqali</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if t.status == 'ACTIVE' %}
+              <span class="badge bg-success">Faol</span>
+            {% else %}
+              <span class="badge bg-secondary">Faol emas</span>
+            {% endif %}
           </td>
           <td class="text-end">
-            <button type="button" class="btn btn-sm btn-outline-info" onclick="validateTest({{ t.id }})">
-              <i class="bi bi-shield-check"></i> Tekshirish
-            </button>
-            {% if t.status != 'ACTIVE' %}
-            <form method="POST" action="{{ url_for('admin.activate_test', test_id=t.id) }}" class="d-inline">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-sm btn-success">
-                <i class="bi bi-play-fill"></i> Faollashtirish
-              </button>
-            </form>
-            {% endif %}
+            <div class="d-flex justify-content-end gap-1">
+              <form method="POST" action="{{ url_for('admin.test_toggle', id=t.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm {% if t.status == 'ACTIVE' %}btn-outline-warning{% else %}btn-outline-success{% endif %}" title="Holatni o'zgartirish">
+                  <i class="bi {% if t.status == 'ACTIVE' %}bi-pause-fill{% else %}bi-play-fill{% endif %}"></i>
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('admin.test_delete', id=t.id) }}" onsubmit="return confirm('Haqiqatan ham ushbu testni o\'chirmoqchimisiz?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="O'chirish">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="7" class="text-center py-4 text-muted">Testlar topilmadi.</td>
+          <td colspan="9" class="text-center py-5 text-muted">
+            <i class="bi bi-clipboard-x fs-1 d-block mb-2"></i>
+            Hozircha testlar yaratilmagan.
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -67,40 +97,70 @@
   </div>
 </div>
 
-<!-- Validation Result Modal -->
-<div class="modal fade" id="validateModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content rounded-3 border-0 shadow">
+<!-- Modal: Create Test -->
+<div class="modal fade" id="createTestModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form method="POST" action="{{ url_for('admin.test_create') }}" class="modal-content rounded-3 border-0 shadow">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="modal-header">
-        <h5 class="modal-title fw-bold">Test Validatsiyasi Natijasi</h5>
+        <h5 class="modal-title fw-bold">Yangi Test Yaratish</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="validateBody">
-        Yuklanmoqda...
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label small fw-bold">Test nomi <span class="text-danger">*</span></label>
+          <input type="text" name="title" class="form-control" placeholder="Masalan: Matematika attestatsiya simulyatsiyasi - 1" required>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Test turi <span class="text-danger">*</span></label>
+            <select name="test_type" class="form-select" required>
+              <option value="FAN">Fan bo'yicha test</option>
+              <option value="MAVZU">Mavzu bo'yicha test</option>
+              <option value="SIMULYATSIYA">Attestatsiya simulyatsiyasi</option>
+              <option value="ARALASH">Aralash test</option>
+              <option value="TASODIFIY">Tasodifiy test</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold">Tegishli Fan <span class="text-danger">*</span></label>
+            <select name="subject_id" class="form-select" required>
+              <option value="">Fanni tanlang...</option>
+              {% for s in subjects %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Savollar soni</label>
+            <input type="number" name="total_questions" class="form-control" value="30" min="5" max="100" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">Vaqt (daqiqa)</label>
+            <input type="number" name="duration_minutes" class="form-control" value="60" min="5" max="240" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">O'tish bali (%)</label>
+            <input type="number" step="0.1" name="passing_score" class="form-control" value="60.0" min="1" max="100" required>
+          </div>
+        </div>
+
+        <div class="form-check form-switch mt-3">
+          <input class="form-check-input" type="checkbox" name="is_free" id="isFreeCheck" value="1">
+          <label class="form-check-label small fw-bold" for="isFreeCheck">
+            Bepul sinov testi (Foydalanuvchi paket sotib olmasdan ham topshirishi mumkin)
+          </label>
+        </div>
       </div>
-    </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Bekor qilish</button>
+        <button type="submit" class="btn btn-gov-primary px-4 fw-bold">Saqlash</button>
+      </div>
+    </form>
   </div>
 </div>
-
-<script>
-  async function validateTest(testId) {
-    const modal = new bootstrap.Modal(document.getElementById('validateModal'));
-    const body = document.getElementById('validateBody');
-    body.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-success"></div><div class="small mt-2">Savollar yetarliligi tekshirilmoqda...</div></div>';
-    modal.show();
-
-    try {
-      const res = await fetch(`/admin/tests/${testId}/validate`);
-      const json = await res.json();
-      if (json.valid) {
-        body.innerHTML = '<div class="alert alert-success mb-0"><i class="bi bi-check-circle-fill me-2 fs-5"></i> <strong>A'lo darajada!</strong> Barcha blueprint qoidalariga mos yetarli faol savollar mavjud. Testni faollashtirish mumkin.</div>';
-      } else {
-        let reasonsHtml = json.reasons.map(r => `<li>${r}</li>`).join('');
-        body.innerHTML = `<div class="alert alert-danger mb-0"><h6 class="fw-bold"><i class="bi bi-x-octagon-fill me-2"></i> Testni faollashtirish mumkin emas:</h6><ul class="mb-0 ps-3 small">${reasonsHtml}</ul></div>`;
-      }
-    } catch (e) {
-      body.innerHTML = '<div class="alert alert-danger mb-0">Tekshirishda xatolik yuz berdi.</div>';
-    }
-  }
-</script>
 {% endblock %}
